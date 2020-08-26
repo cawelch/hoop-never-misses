@@ -3,7 +3,7 @@ file: 2d-shot.py
 
 Author: Caitlin Welch
 Date created: August 24, 2020
-Date modified: 
+Date modified: Auguest 25, 2020
 
 Brief: Uses RK4 ODE solver to plot the 2D trajectory of a Wilson basketball
 """
