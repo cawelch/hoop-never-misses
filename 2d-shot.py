@@ -3,7 +3,7 @@ file: 2d-shot.py
 
 Author: Caitlin Welch
 Date created: August 24, 2020
-Date modified: August 26, 2020
+Date modified: August 29, 2020
 
 Brief: Uses RK4 ODE solver to plot the 2D trajectory of a Wilson basketball
 """
@@ -40,7 +40,7 @@ start_height = 1.8
 init = [0, start_height, v0*np.cos(theta), v0*np.sin(theta)]
 
 
-def f(r, t):
+def f(r, m):
     x = r[0]
     y = r[1]
     v_x = r[2]
@@ -54,13 +54,13 @@ def f(r, t):
     return np.array([fx, fy, f_v_x, f_v_y], float)
 
 
-def RK4():
-    x_poitns = []
+def RK4(m):
+    x_points = []
     y_points = []
     v_x_points = []
     v_y_points = []
 
-    r = np.array(init, float)
+    r = np.array([0,start_height,v0*np.cos(theta),v0*np.sin(theta)], float)
 
     for t in T:
         x_points.append(r[0])
@@ -68,29 +68,32 @@ def RK4():
         v_x_points.append(r[2])
         v_y_points.append(r[3])
 
-        k1 = h*f(r, t)
-        k2 = h*f(r+0.5*k1, t)
-        k3 = h*f(r+0.5*k2, t)
-        k4 = h*f(r+k3, t)
+        k1 = h*f(r, m)
+        k2 = h*f(r+0.5*k1, m)
+        k3 = h*f(r+0.5*k2, m)
+        k4 = h*f(r+k3, m)
         r += (k1+2*k2+2*k3+k4)/6
 
-    return x_points, y_points, v_x_points, v_y_points
+    return T, x_points, y_points, v_x_points, v_y_points
 
 
 def main():
-    x_points, y_points, v_x_points, v_y_points = RK4()
+    T, x_points, y_points, v_x_points, v_y_points = RK4(m)
 
-    # if using RK4 function
-    #solution = [x_points, y_points, v_x_points, v_y_points]
     # if using odeint
-    solution = odeint(f, init, T)
+    #solution = odeint(f, init, T)
 
-    # finds the solution index where the basketball hits the ground
-    ground_index = solution[:, 1].index(0)
+    # shortens the array for only positive y values
+    """
+    positive_y = []
+    for ys in solution[:,1]:
+        if ys >= 0:
+            positive_y.append(ys)
+    """
 
     # only plots until the basketball hits the ground
-    plt.plot(solution[:ground_index, 0], solution[:ground_index, 1])
-    plt.ylim(0, 10)
+    #plt.plot(solution[:len(positive_y), 0], positive_y)
+    plt.plot(x_points,y_points)
     plt.show()
 
 
