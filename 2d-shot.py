@@ -12,35 +12,21 @@ import numpy as np
 import pylab as plt
 from scipy.integrate import odeint
 
-C_d = 0.47  # drag coefficient for a sphere
-rho = 1.225  # air density in kg/m^3
-C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
-A = C**2/(4*np.pi)  # cross-sectional area in m^2
-g = 9.81  # gravitational constant on Earth
-m = 22/35.274  # gives mass in kg of 22oz basketball
-
-coef = -C_d*rho*A  # only used so I don't have to keep writing this out
-
-"""
-Constants for linspace
-"""
-a = 0
-b = 1000
-N = 10000
-T = np.linspace(a, b, N)
-h = (b-a)/N
-
-"""
-Change each of these initial values for different shots when doing the Monte Carlo simulation
-"""
-angle = 38  # float(input("Enter angle shot at in degrees: "))
-v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
-theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
-start_height = 1.8
-init = [0, start_height, v0*np.cos(theta), v0*np.sin(theta)]
 
 
-def f(r, m):
+
+
+
+def f(r):
+
+    C_d = 0.47  # drag coefficient for a sphere
+    rho = 1.225  # air density in kg/m^3
+    C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
+    A = C**2/(4*np.pi)  # cross-sectional area in m^2
+    g = 9.81  # gravitational constant on Earth
+    m = 22/35.274  # gives mass in kg of 22oz basketball
+
+    coef = -C_d*rho*A  # only used so I don't have to keep writing this out
     x = r[0]
     y = r[1]
     v_x = r[2]
@@ -54,31 +40,49 @@ def f(r, m):
     return np.array([fx, fy, f_v_x, f_v_y], float)
 
 
-def RK4(m):
+def RK4(init):
     x_points = []
     y_points = []
     v_x_points = []
     v_y_points = []
 
-    r = np.array([0,start_height,v0*np.cos(theta),v0*np.sin(theta)], float)
-
-    for t in T:
+    r = np.array(init, float)
+    h = 0.01
+    while r[1] >= 0:
         x_points.append(r[0])
         y_points.append(r[1])
         v_x_points.append(r[2])
         v_y_points.append(r[3])
 
-        k1 = h*f(r, m)
-        k2 = h*f(r+0.5*k1, m)
-        k3 = h*f(r+0.5*k2, m)
-        k4 = h*f(r+k3, m)
+        k1 = h*f(r)
+        k2 = h*f(r+0.5*k1)
+        k3 = h*f(r+0.5*k2)
+        k4 = h*f(r+k3)
         r += (k1+2*k2+2*k3+k4)/6
 
-    return T, x_points, y_points, v_x_points, v_y_points
+    return x_points, y_points, v_x_points, v_y_points
 
 
 def main():
-    T, x_points, y_points, v_x_points, v_y_points = RK4(m)
+
+    """
+    Constants for linspace
+    """
+    a = 0
+    b = 1000
+    N = 10000
+    T = np.linspace(a, b, N)
+    h = (b-a)/N
+
+    """
+    Change each of these initial values for different shots when doing the Monte Carlo simulation
+    """
+    angle = 38  # float(input("Enter angle shot at in degrees: "))
+    v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
+    theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
+    start_height = 1.8
+    init = [0, start_height, v0*np.cos(theta), v0*np.sin(theta)]
+    x_points, y_points, v_x_points, v_y_points = RK4(init)
 
     # if using odeint
     #solution = odeint(f, init, T)
