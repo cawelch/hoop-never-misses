@@ -12,7 +12,7 @@ Brief: Uses RK4 ODE solver to plot the 3D trajectory of a Wilson basketball
 import numpy as np
 import matplotlib.pyplot as plt
 
-eps = 1e-2 #margin of error when checking if two quantities are equal
+eps = 1e-1 #margin of error when checking if two quantities are equal
 
 """
 Function used to set up the second order differential equations for the
@@ -39,11 +39,11 @@ def f(r):
     v_z = r[5]
 
     fx = v_x
-    fy = v_y
+    fy = -v_y
     fz = v_z
 
     f_v_x = coef*fx*np.sqrt(fx**2+fy**2+fz**2)/(2*m)
-    f_v_y = coef*fy*np.sqrt(fx**2+fy**2+fz**2)/(2*m)
+    f_v_y = -coef*fy*np.sqrt(fx**2+fy**2+fz**2)/(2*m)
     f_v_z = coef*fz*np.sqrt(fx**2+fy**2+fz**2)/(2*m)-g
 
     return np.array([fx, fy, fz, f_v_x, f_v_y, f_v_z], float)
@@ -161,7 +161,7 @@ def main():
     angle = 80  # float(input("Enter angle shot at in degrees: "))
     theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
     v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
-    start_height = 1.8 # m - this for someone around 6ft tall
+    start_height = 1.8 # m - this is for someone around 6ft tall
     # postive x values represent a shot coming from the right of the hoop, negative x values represent shots coming from the left of the hoop
     start_x = 0
     start_y = 2.5 # all y values will be positive - distance from hoop, perpendicular to endline
@@ -181,12 +181,29 @@ def main():
         v_y_backboard = v_y_before + v_y_after
         v_z_backboard = v_z_before + v_z_after
 
+
+
         print(in_basket(x_backboard,y_backboard,z_backboard))
+
+        """
+        The following lines of code are to see if we get the same result as in
+        2d-shot.py when we limit the 3D code to 2D.
+        """
+        xy = []
+        for i in range(len(x_backboard)):
+            xy.append(np.sqrt(x_backboard[i]**2+y_backboard[i]**2))
+        plt.plot(xy,z_backboard)
+        plt.plot(np.linspace(0.15,0.6,100),[3.048]*100)
+        plt.show()
         #PLOT 3D BACKBOARD SHOTS HERE
 
     except:
         print("Ball does not come in contact with the backboard.")
         print(in_basket(x_points,y_points,z_points))
+        plt.plot(y_points,z_points)
+        plt.plot(np.linspace(0.15,0.6,100),[3.048]*100)
+        plt.show()
+
         #PLOT 3D SHOTS HERE
 
 
