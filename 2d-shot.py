@@ -133,6 +133,28 @@ def in_basket(x_points, y_points, distance_backboard):
     return False
 
 
+def backboard(x,y,v_x,v_y,T,distance_backboard):
+    try:
+        x_before, y_before, v_x_before, v_y_before = elastic(x, y, v_x, v_y, T, distance_backboard)
+        backboard_hit = [x_before[-1],y_before[-1],-1*v_x_before[-1],v_y_before[-1]]
+        x_after, y_after, v_x_after, v_y_after = RK4(backboard_hit)
+        x_backboard = x_before + x_after
+        y_backboard = y_before + y_after
+        v_x_backboard = v_x_before + v_x_after
+        v_y_backboard = v_y_before + v_y_after
+
+        print(in_basket(x_backboard,y_backboard,distance_backboard))
+        plt.plot(x_backboard,y_backboard)
+        plt.plot(np.linspace(distance_backboard-0.6,distance_backboard-0.15,100),[3.048]*100)
+        plt.show()
+
+    except:
+        print("Ball does not come in contact with the backboard.")
+        print(in_basket(x,y,distance_backboard))
+        plt.plot(x,y)
+        plt.plot(np.linspace(distance_backboard-0.6,distance_backboard-0.15,100),[3.048]*100)
+        plt.show()
+
 
 def main():
     """
@@ -157,26 +179,7 @@ def main():
     init = [0, start_height, v0*np.cos(theta), v0*np.sin(theta)]
     x_points, y_points, v_x_points, v_y_points = RK4(init)
 
-    try:
-        x_before, y_before, v_x_before, v_y_before = elastic(x_points, y_points, v_x_points, v_y_points, T, distance_backboard)
-        backboard_hit = [x_before[-1],y_before[-1],-1*v_x_before[-1],v_y_before[-1]]
-        x_after, y_after, v_x_after, v_y_after = RK4(backboard_hit)
-        x_backboard = x_before + x_after
-        y_backboard = y_before + y_after
-        v_x_backboard = v_x_before + v_x_after
-        v_y_backboard = v_y_before + v_y_after
-
-        print(in_basket(x_backboard,y_backboard,distance_backboard))
-        plt.plot(x_backboard,y_backboard)
-        plt.plot(np.linspace(distance_backboard-0.6,distance_backboard-0.15,100),[3.048]*100)
-        plt.show()
-
-    except:
-        print("Ball does not come in contact with the backboard.")
-        print(in_basket(x_points,y_points,distance_backboard))
-        plt.plot(x_points,y_points)
-        plt.plot(np.linspace(distance_backboard-0.6,distance_backboard-0.15,100),[3.048]*100)
-        plt.show()
+    backboard(x_points,y_points,v_x_points,v_y_points,T,distance_backboard)
 
 
 

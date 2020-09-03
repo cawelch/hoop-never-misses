@@ -8,9 +8,10 @@ Date modified: August 31, 2020
 Brief: Uses RK4 ODE solver to plot the 3D trajectory of a Wilson basketball
 """
 
-#from mpl_toolkits import mplot3d
+from mpl_toolkits import mplot3d
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 eps = 1e-1 #margin of error when checking if two quantities are equal
 
@@ -38,11 +39,11 @@ def f(r):
     v_y = r[4]
     v_z = r[5]
 
-    fx = v_x
+    fx = -v_x
     fy = -v_y
     fz = v_z
 
-    f_v_x = coef*fx*np.sqrt(fx**2+fy**2+fz**2)/(2*m)
+    f_v_x = -coef*fx*np.sqrt(fx**2+fy**2+fz**2)/(2*m)
     f_v_y = -coef*fy*np.sqrt(fx**2+fy**2+fz**2)/(2*m)
     f_v_z = coef*fz*np.sqrt(fx**2+fy**2+fz**2)/(2*m)-g
 
@@ -86,40 +87,59 @@ def RK4(init):
 
 """
 Creates new arrays of the x, y and z positions and velocities of the basketball
-until the time that it hits the backboard.
+for the motion of the basketball when the backboard is in play. Uses the values
+of each position and velocity right when the ball hits the backboard to solve
+for the positions and velocities of the ball after it hits the backboard.
 
 Parameters:
 x_points, y_points, z_points, v_x_points, v_y_points v_z_points - solved arrays
     for the x, y and positions and velocities
-T - time array for which the shot is being modelled
-distance_backboard - float value, which will be changed for different shots
 
-Returns: new_x, new_y, new_z, new_v_x, new_v_y new_v_z - arrays of the original
-        x and y positions or velocities of the shot until it hits the backboard
+Returns: x,y,z,v_x,v_y,v_z - arrays of each respective variable including both
+        before and after the ball hits the backboard
 """
-def elastic(x_points, y_points, z_points, v_x_points, v_y_points, v_z_points, T):
-    t = T[1]-T[0]
-    length = len(x_points)
-    new_x = []
-    new_y = []
-    new_z = []
-    new_v_x = []
-    new_v_y = []
-    new_v_z = []
+def backboard(x_points, y_points, z_points, v_x_points, v_y_points, v_z_points):
+    hits_backboard = False
 
-    for i in range(length):
-        if not ((z_points[i] >= 3.048 and z_points[i] <= 4.1148) and
-            y_points[i] <= eps and (x_points[i] <= 0.9144 and x_points[i] >= -0.9144)):
+    y_0 = 10
+    index = -1
+    for i in range(len(y_points)):
+        y = np.absolute(y_points[i])
+        if y < y_0:
+            y_0 = y
+            index = i
 
-            new_x.append(x_points[i])
-            new_y.append(y_points[i])
-            new_z.append(z_points[i])
-            new_v_x.append(v_x_points[i])
-            new_v_y.append(v_y_points[i])
-            new_v_z.append(v_z_points[i])
+    if z_points[index] >= 3.048 and z_points[index] <= 4.1148 and x_points[index] <= 0.9144 and x_points[index] >= -0.9144:
+        hits_backboard = True
 
-        else:
-            return new_x, new_y, new_z, new_v_x, new_v_y, new_v_z
+    if hits_backboard:
+        print("hit")
+        x_before = x_points[:index]
+        y_before = y_points[:index]
+        z_before = z_points[:index]
+        v_x_before = v_x_points[:index]
+        v_y_before = v_y_points[:index]
+        v_z_before = v_z_points[:index]
+
+        backboard_hit = [x_before[-1],y_before[-1],z_before[-1],v_x_before[-1],-1*v_y_before[-1],-1*v_z_before[-1]]
+        x_after,y_after,z_after,v_x_after,v_y_after,v_z_after = RK4(backboard_hit)
+
+        x = x_before + x_after
+        y = y_before + y_after
+        z = z_before + z_after
+        v_x = v_x_before + v_x_after
+        v_y = v_y_before + v_y_after
+        v_z = v_z_before + v_z_after
+    else:
+        print("Ball does not come in contact with the backboard.")
+        x = x_points
+        y = y_points
+        z = z_points
+        v_x = v_x_points
+        v_y = v_y_points
+        v_z = v_z_points
+
+    return x,y,z,v_x,v_y,v_z
 
 
 """
@@ -138,7 +158,7 @@ def in_basket(x_points, y_points, z_points):
         if np.absolute(z_points[i]-3.048) <= eps:
             if ((y_points[i]-radius) >= 0.15 and
                 (y_points[i]+radius) <= 0.6):
-                if ((x_points[i]-radius) >= -0.2286) and (x_points[i]+radius <= 0.2286):
+                if ((x_points[i]-radius) >= -0.225) and (x_points[i]+radius <= 0.225):
                     shot_made = True
                     return shot_made
 
@@ -151,68 +171,50 @@ def main():
     """
     a = 0
     b = 1000
-    N = 10000
+    N = 1000000
     T = np.linspace(a,b,N)
     h = (b-a)/N
 
     """
     Change each of these initial values for different shots when doing the Monte Carlo simulation
     """
-    angle = 80  # float(input("Enter angle shot at in degrees: "))
+    angle = 60  # float(input("Enter angle shot at in degrees: "))
     theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
     v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
     start_height = 1.8 # m - this is for someone around 6ft tall
     # postive x values represent a shot coming from the right of the hoop, negative x values represent shots coming from the left of the hoop
     start_x = 0
-    start_y = 2.5 # all y values will be positive - distance from hoop, perpendicular to endline
+    start_y = 7 # all y values will be positive - distance from hoop, perpendicular to endline
     phi = np.arctan(start_x/start_y)
 
     init = [start_x, start_y, start_height, v0*np.cos(theta)*np.sin(phi), v0*np.cos(theta)*np.cos(phi), v0*np.sin(theta)]
     x_points, y_points, z_points, v_x_points, v_y_points, v_z_points = RK4(init)
 
-    try:
-        x_before, y_before, z_before, v_x_before, v_y_before, v_z_before = elastic(x_points, y_points, z_points, v_x_points, v_y_points, v_z_points,T)
-        backboard_hit = [x_before[-1],y_before[-1],z_before[-1],v_x_before[-1],-1*v_y_before[-1],v_z_before[-1]]
-        x_after, y_after, z_after, v_x_after, v_y_after, v_z_after = RK4(backboard_hit)
-        x_backboard = x_before + x_after
-        y_backboard = y_before + y_after
-        z_backboard = z_before + z_after
-        v_x_backboard = v_x_before + v_x_after
-        v_y_backboard = v_y_before + v_y_after
-        v_z_backboard = v_z_before + v_z_after
+    x_backboard,y_backboard,z_backboard,v_x_backboard,v_y_backboard,v_z_backboard = backboard(x_points,y_points,z_points,v_x_points,v_y_points,v_z_points)
+    print(in_basket(x_backboard,y_backboard,z_backboard))
 
-
-
-        print(in_basket(x_backboard,y_backboard,z_backboard))
-
-        """
-        The following lines of code are to see if we get the same result as in
-        2d-shot.py when we limit the 3D code to 2D.
-        """
-        xy = []
-        for i in range(len(x_backboard)):
-            xy.append(np.sqrt(x_backboard[i]**2+y_backboard[i]**2))
-        plt.plot(xy,z_backboard)
-        plt.plot(np.linspace(0.15,0.6,100),[3.048]*100)
-        plt.show()
-        #PLOT 3D BACKBOARD SHOTS HERE
-
-    except:
-        print("Ball does not come in contact with the backboard.")
-        print(in_basket(x_points,y_points,z_points))
-        plt.plot(y_points,z_points)
-        plt.plot(np.linspace(0.15,0.6,100),[3.048]*100)
-        plt.show()
-
-        #PLOT 3D SHOTS HERE
-
-
-    """
     fig = plt.figure()
     ax = plt.axes(projection='3d')
-    ax.plot3D(x_points, y_points, z_points)
+    ax.plot3D(x_backboard, y_backboard, z_backboard)
+
+    ax.plot3D(np.linspace(-0.9144,0.9144,1000),[0]*1000,[3.048]*1000,'r')
+    ax.plot3D(np.linspace(-0.9144,0.9144,1000),[0]*1000,[4.1148]*1000,'r')
+    ax.plot3D([-0.9144]*1000,[0]*1000,np.linspace(3.048,4.1148,1000),'r')
+    ax.plot3D([0.9144]*1000,[0]*1000,np.linspace(3.048,4.1148,1000),'r')
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+
+    circle_x = np.linspace(-0.225,0.225,1000)
+    circle_y1 = []
+    circle_y2 = []
+    for x in circle_x:
+        circle_y1.append(np.sqrt(.225**2-x**2)+.375)
+        circle_y2.append(-np.sqrt(.225**2-x**2)+.375)
+    ax.plot3D(circle_x,circle_y1,[3.048]*1000,'g')
+    ax.plot3D(circle_x,circle_y2,[3.048]*1000,'g')
     plt.show()
-    """
+
 
 if __name__ == "__main__":
     main()
