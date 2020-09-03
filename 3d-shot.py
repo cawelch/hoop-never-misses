@@ -121,7 +121,7 @@ def backboard(x_points, y_points, z_points, v_x_points, v_y_points, v_z_points):
         v_y_before = v_y_points[:index]
         v_z_before = v_z_points[:index]
 
-        backboard_hit = [x_before[-1],y_before[-1],z_before[-1],v_x_before[-1],-1*v_y_before[-1],-1*v_z_before[-1]]
+        backboard_hit = [x_before[-1],y_before[-1],z_before[-1],v_x_before[-1],-1*v_y_before[-1],v_z_before[-1]]
         x_after,y_after,z_after,v_x_after,v_y_after,v_z_after = RK4(backboard_hit)
 
         x = x_before + x_after
@@ -178,13 +178,13 @@ def main():
     """
     Change each of these initial values for different shots when doing the Monte Carlo simulation
     """
-    angle = 60  # float(input("Enter angle shot at in degrees: "))
+    angle = 65  # float(input("Enter angle shot at in degrees: "))
     theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
     v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
     start_height = 1.8 # m - this is for someone around 6ft tall
     # postive x values represent a shot coming from the right of the hoop, negative x values represent shots coming from the left of the hoop
-    start_x = 0
-    start_y = 7 # all y values will be positive - distance from hoop, perpendicular to endline
+    start_x = -3
+    start_y = 4.5 # all y values will be positive - distance from hoop, perpendicular to endline
     phi = np.arctan(start_x/start_y)
 
     init = [start_x, start_y, start_height, v0*np.cos(theta)*np.sin(phi), v0*np.cos(theta)*np.cos(phi), v0*np.sin(theta)]
