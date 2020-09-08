@@ -99,14 +99,13 @@ Returns: x,y,z,v_x,v_y,v_z - arrays of each respective variable including both
         before and after the ball hits the backboard
 """
 def backboard(x_points, y_points, z_points, v_x_points, v_y_points, v_z_points):
+    C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
+    radius = C/(2*np.pi)
     hits_backboard = False
 
-    y_0 = 10
     index = -1
     for i in range(len(y_points)):
-        y = np.absolute(y_points[i])
-        if y < y_0:
-            y_0 = y
+        if np.absolute(y_points[i]-radius) <= eps:
             index = i
 
     if z_points[index] >= 3.048 and z_points[index] <= 4.1148 and x_points[index] <= 0.9144 and x_points[index] >= -0.9144:
@@ -178,13 +177,13 @@ def main():
     """
     Change each of these initial values for different shots when doing the Monte Carlo simulation
     """
-    angle = 65  # float(input("Enter angle shot at in degrees: "))
+    angle = 80  # float(input("Enter angle shot at in degrees: "))
     theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
     v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
     start_height = 1.8 # m - this is for someone around 6ft tall
     # postive x values represent a shot coming from the right of the hoop, negative x values represent shots coming from the left of the hoop
-    start_x = -3
-    start_y = 4.5 # all y values will be positive - distance from hoop, perpendicular to endline
+    start_x = 0
+    start_y = 2.5 # all y values will be positive - distance from hoop, perpendicular to endline
     phi = np.arctan(start_x/start_y)
 
     init = [start_x, start_y, start_height, v0*np.cos(theta)*np.sin(phi), v0*np.cos(theta)*np.cos(phi), v0*np.sin(theta)]

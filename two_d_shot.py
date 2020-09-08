@@ -90,6 +90,8 @@ Returns: new_x, new_y, new_v_x, new_v_y - arrays of the original x and y
         positions or velocities of the shot until it hits the backboard
 """
 def elastic(x_points, y_points, v_x_points, v_y_points, T, distance_backboard):
+    C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
+    radius = C/(2*np.pi)
     t = T[1]-T[0]
     length = len(x_points) #this could have been any of the four arrays since they're the same length
     new_x = []
@@ -98,7 +100,7 @@ def elastic(x_points, y_points, v_x_points, v_y_points, T, distance_backboard):
     new_v_y = []
 
     for i in range(length):
-        if not (np.absolute(x_points[i]-distance_backboard) <= eps and
+        if not (np.absolute(x_points[i]+radius-distance_backboard) <= eps and
             y_points[i] >= 3.048 and y_points[i] <= 4.1148):
 
             new_x.append(x_points[i])
@@ -166,11 +168,11 @@ def main():
     """
     Change each of these initial values for different shots when doing the Monte Carlo simulation
     """
-    angle = 60  # float(input("Enter angle shot at in degrees: "))
+    angle = 80  # float(input("Enter angle shot at in degrees: "))
     theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
     v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
     start_height = 1.8
-    distance_backboard = 7 #arbitrary distance from backboard in m
+    distance_backboard = 2.5 #arbitrary distance from backboard in m
 
 
     init = [0, start_height, v0*np.cos(theta), v0*np.sin(theta)]
