@@ -17,10 +17,10 @@ eps = 1e-1 # margin of error when checking if two quantities are equal
 
 """
 Function used to set up the second order differential equations for the
-x and y positions and velocities of the ball.
+y and z positions and velocities of the ball.
 
-Parameters: r - array of the x and y positons and x and y velocities
-Returns: array of the differential equation for the x and y positions and velocities
+Parameters: r - array of the y and z positons and y and z velocities
+Returns: array of the differential equation for the y and z positions and velocities
 """
 def f(r):
     C_d = 0.47  # drag coefficient for a sphere
@@ -32,40 +32,40 @@ def f(r):
     m = 22/35.274  # gives mass in kg of 22oz basketball
 
     coef = -C_d*rho*A  # only used so I don't have to keep writing this out
-    x = r[0]
-    y = r[1]
-    v_x = r[2]
-    v_y = r[3]
+    y = r[0]
+    z = r[1]
+    v_y = r[2]
+    v_z = r[3]
 
-    fx = v_x
     fy = v_y
+    fz = v_z
 
-    f_v_x = coef*fx*np.sqrt(fx**2+fy**2)/(2*m)
-    f_v_y = coef*fy*np.sqrt(fx**2+fy**2)/(2*m)-g
+    f_v_y = coef*fy*np.sqrt(fy**2+fz**2)/(2*m)
+    f_v_z = coef*fz*np.sqrt(fx**2+fz**2)/(2*m)-g
 
-    return np.array([fx, fy, f_v_x, f_v_y], float)
+    return np.array([fy, fz, f_v_y, f_v_z], float)
 
 
 """
 Function used to solve the differential equations, using the Fourth order
 Runge-Kutta method.
 
-Parameters: init - array of the initial x and y positions and velocities
-Returns: solved differential equations of the x and y positions and velocities
+Parameters: init - array of the initial y and z positions and velocities
+Returns: solved differential equations of the y and z positions and velocities
 """
 def RK4(init):
-    x_points = []
     y_points = []
-    v_x_points = []
+    z_points = []
     v_y_points = []
+    v_z_points = []
 
     r = np.array(init, float)
     h = 0.01
     while r[1] >= 0:
-        x_points.append(r[0])
-        y_points.append(r[1])
-        v_x_points.append(r[2])
-        v_y_points.append(r[3])
+        y_points.append(r[0])
+        z_points.append(r[1])
+        v_y_points.append(r[2])
+        v_z_points.append(r[3])
 
         k1 = h*f(r)
         k2 = h*f(r+0.5*k1)
@@ -73,83 +73,83 @@ def RK4(init):
         k4 = h*f(r+k3)
         r += (k1+2*k2+2*k3+k4)/6
 
-    return x_points, y_points, v_x_points, v_y_points
+    return y_points, z_points, v_y_points, v_z_points
 
 
 """
-Creates new arrays of the x and y positions and velocities of the basketball
+Creates new arrays of the y and z positions and velocities of the basketball
 until the time that it hits the backboard.
 
 Parameters:
-x_points, y_points, v_x_points, v_y_points - solved arrays for the x and y
+y_points, z_points, v_y_points, v_z_points - solved arrays for the y and z
                                             positions and velocities
 T - time array for which the shot is being modelled
 distance_backboard - float value, which will be changed for different shots
 
-Returns: new_x, new_y, new_v_x, new_v_y - arrays of the original x and y
+Returns: new_y, new_z, new_v_y, new_v_z - arrays of the original y and z
         positions or velocities of the shot until it hits the backboard
 """
-def elastic(x_points, y_points, v_x_points, v_y_points, T, distance_backboard):
+def elastic(y_points, z_points, v_y_points, v_z_points, T, distance_backboard):
     C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
     t = T[1]-T[0]
-    length = len(x_points) #this could have been any of the four arrays since they're the same length
-    new_x = []
+    length = len(y_points) #this could have been any of the four arrays since they're the same length
     new_y = []
-    new_v_x = []
+    new_z = []
     new_v_y = []
+    new_v_z = []
 
     for i in range(length):
-        if not (np.absolute(x_points[i]+radius-distance_backboard) <= eps and
-            y_points[i] >= 3.048 and y_points[i] <= 4.1148):
+        if not (np.absolute(y_points[i]+radius-distance_backboard) <= eps and
+            z_points[i] >= 3.048 and z_points[i] <= 4.1148):
 
-            new_x.append(x_points[i])
             new_y.append(y_points[i])
-            new_v_x.append(v_x_points[i])
+            new_z.append(z_points[i])
             new_v_y.append(v_y_points[i])
+            new_v_z.append(v_z_points[i])
 
         else:
-            return new_x, new_y, new_v_x, new_v_y
+            return new_y, new_z, new_v_y, new_v_z
 
 """
 Determines whether a basket was made for the given shot.
 
 Parameters:
-x_points, y_points - x and y positions of the ball at all times
+y_points, z_points - y and z positions of the ball at all times
 distance_backboard - starting distance from the backboard
 
 Returns: boolean value indicating whether the ball went through the hoop's dimensions
 """
-def in_basket(x_points, y_points, distance_backboard):
+def in_basket(y_points, z_points, distance_backboard):
     C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
     shot_made = False
 
-    for i in range(len(x_points)):
-        if np.absolute(y_points[i]-3.048) <= eps:
-            if ((x_points[i]-radius) >= (distance_backboard-0.6) and
-                (x_points[i]+radius) <= (distance_backboard-0.15)):
+    for i in range(len(y_points)):
+        if np.absolute(z_points[i]-3.048) <= eps:
+            if ((y_points[i]-radius) >= (distance_backboard-0.6) and
+                (y_points[i]+radius) <= (distance_backboard-0.15)):
                 shot_made = True
                 return shot_made
 
     return False
 
 
-def backboard(x,y,v_x,v_y,T,distance_backboard):
+def backboard(y,z,v_y,v_z,T,distance_backboard):
     try:
-        x_before, y_before, v_x_before, v_y_before = elastic(x, y, v_x, v_y, T, distance_backboard)
-        backboard_hit = [x_before[-1],y_before[-1],-1*v_x_before[-1],v_y_before[-1]]
-        x_after, y_after, v_x_after, v_y_after = RK4(backboard_hit)
-        x = x_before + x_after
+        y_before, z_before, v_y_before, v_z_before = elastic(y, z, v_y, v_z, T, distance_backboard)
+        backboard_hit = [y_before[-1],z_before[-1],-1*v_y_before[-1],v_z_before[-1]]
+        y_after, z_after, v_y_after, v_z_after = RK4(backboard_hit)
         y = y_before + y_after
-        v_x = v_x_before + v_x_after
+        z = z_before + z_after
         v_y = v_y_before + v_y_after
+        v_z = v_z_before + v_z_after
 
     except:
         print("Ball does not come in contact with the backboard.")
 
-    print(in_basket(x,y,distance_backboard))
-    plt.plot(x,y)
+    print(in_basket(y,z,distance_backboard))
+    plt.plot(y,z)
     plt.plot(np.linspace(distance_backboard-0.6,distance_backboard-0.15,100),[3.048]*100)
     plt.plot([distance_backboard]*100,np.linspace(3.048,4.1148,100))
     plt.show()
@@ -176,9 +176,9 @@ def main():
 
 
     init = [0, start_height, v0*np.cos(theta), v0*np.sin(theta)]
-    x_points, y_points, v_x_points, v_y_points = RK4(init)
+    y_points, z_points, v_y_points, v_z_points = RK4(init)
 
-    backboard(x_points,y_points,v_x_points,v_y_points,T,distance_backboard)
+    backboard(y_points,z_points,v_y_points,v_z_points,T,distance_backboard)
 
 
 
@@ -188,17 +188,17 @@ def main():
 
     # shortens the array for only positive y values
     """
-    positive_y = []
-    for ys in solution[:,1]:
-        if ys >= 0:
-            positive_y.append(ys)
+    positive_z = []
+    for zs in solution[:,1]:
+        if zs >= 0:
+            positive_z.append(ys)
     """
 
 
 
     # only plots until the basketball hits the ground
-    #plt.plot(solution[:len(positive_y), 0], positive_y)
-    #plt.plot(x_points, y_points)
+    #plt.plot(solution[:len(positive_z), 0], positive_z)
+    #plt.plot(y_points, z_points)
 
 
 if __name__ == "__main__":
