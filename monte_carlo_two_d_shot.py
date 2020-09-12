@@ -3,13 +3,12 @@ file: monte-carlo-2d-shot.py
 
 Author: Caitlin Welch
 Date created: September 6, 2020
-Date modified: September 9, 2020
+Date modified: September 10, 2020
 
 Brief: First attempt at running a Monte Carlo simulation for a 2D shot to form
         a continuous curved backboard
 """
 
-import two_d_shot
 import numpy as np
 import pylab as plt
 
@@ -89,20 +88,25 @@ Parameters: phi - angle the backboard makes with the vertical z axis
 Returns: y_before, z_before, v_y_before, v_z_before - the y and z positions and
         velocities of the ball up until it hits the backboard
 """
-def backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points,T):
+def backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points):
     C = 0.7493 # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
-    t = T[1]-T[0]
     length = len(y_points) #this could have been any of the four arrays since they're the same length
     height_backboard = 1.0668
     hits_backboard = False
 
     index = -1
     for i in range(length):
-        if y_points[i]-radius >= 0 and y_points[i]+radius <= height_backboard*np.sin(phi):
-            if z_points[i]-radius >= 3.048 and z_points[i]+radius <= 3.048+height_backboard+np.cos(phi):
-                index = i
-                hits_backboard = True
+        if phi <= np.pi/2 and phi >= 0:
+            if y_points[i]-radius >= 0 and y_points[i]+radius <= height_backboard*np.cos(phi):
+                if z_points[i]-radius >= 3.048 and z_points[i]+radius <= 3.048+height_backboard+np.sin(phi):
+                    index = i
+                    hits_backboard = True
+        elif phi > np.pi/2 and phi <= np.pi:
+            if y_points[i]-radius >= -height_backboard*np.cos(np.pi-phi) and y_points[i]+radius <= 0:
+                if z_points[i]-radius >= 3.048 and z_points[i]+radius <= 3.048+height_backboard*np.sin(np.pi-phi):
+                    index = i
+                    hits_backboard = True
 
     if hits_backboard:
         y_before = y_points[:index]
@@ -113,8 +117,18 @@ def backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points,T):
         v = np.sqrt((v_y_before[-1])**2+(v_z_before[-1])**2)
         theta = np.arctan(v_z_before[-1]/v_y_before[-1])
 
-        backboard_hit = [y_before[-1],z_before[-1],v*np.cos(np.pi-theta-2*phi),v*np.sin(np.pi-theta-2*phi)]
-        y_after,z_after,v_y_after,v_z_after = RK4(backboard_hit)
+
+        if phi > np.pi/2 and phi <= np.pi:
+            if v_z_before[-1] > 0:
+                backboard_hit = [y_before[-1],z_before[-1],-v*np.cos(2*phi-theta-np.pi/2),-v*np.sin(2*phi-theta-np.pi/2)]
+            else:
+                backboard_hit = [y_before[-1],z_before[-1],-v*np.cos(2*phi-theta-np.pi/2),v*np.sin(2*phi-theta-np.pi/2)]
+        elif phi <= np.pi/2 and phi >= 0:
+            if v_z_before[-1] > 0:
+                backboard_hit = [y_before[-1],z_before[-1],-v*np.sin(np.pi/2+theta-2*phi),-v*np.cos(np.pi/2+theta-2*phi)]
+            else:
+                backboard_hit = [y_before[-1],z_before[-1],-v*np.sin(np.pi/2+theta-2*phi),v*np.cos(np.pi/2+theta-2*phi)]
+        y_after, z_after, v_y_after, v_z_after = RK4(backboard_hit)
 
         y = y_before + y_after
         z = z_before + z_after
@@ -127,8 +141,7 @@ def backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points,T):
         v_y = v_y_points
         v_z = v_z_points
 
-
-    return hits_backboard,index,y,z,v_y,v_z
+    return hits_backboard,y,z,v_y,v_z
 
 
 """
@@ -165,19 +178,10 @@ Returns:
 """
 def monte_carlo():
     """
-    Constants for linspace
-    """
-    a = 0
-    b = 1000
-    N = 1000000
-    T = np.linspace(a,b,N)
-    h = (b-a)/N
-
-    """
     Different initial conditions for the shot to randomly choose from.
     """
-    number_of_shots = 1
-    backboard_angles = np.arange(-90,90,0.1)
+    number_of_shots = 100
+    backboard_angles = np.linspace(np.pi/6,5*np.pi/6,1000)
     start_ys = np.arange(0,10,0.1)
     start_zs = np.arange(1,2,0.1)
     v0s = np.arange(4,9,0.1)
@@ -186,25 +190,24 @@ def monte_carlo():
     for angle in start_angles:
         start_thetas.append((np.pi/180) * angle)
     percent_in = []
-    hit_indices = []
-
-    most = []
     y = []
     z = []
     v_y = []
     v_z = []
-    best = []
 
     """
     Iterate through the potential angles the backboard can be at.
     """
-    for phi in backboard_angles:
+    for i in range(len(backboard_angles)):
+        y.append([])
+        z.append([])
+        v_y.append([])
+        v_z.append([])
+        phi = backboard_angles[i]
         """
         Variables that will help in finding the optimum angle for a bunch of different shots.
         """
-        best_angle = 0
-        most_in = -1
-        shots_hit_backboard = number_of_experiments
+        shots_hit_backboard = number_of_shots
         shots_made = 0
         """
         Iterate through (eventually a large number of) random shots.
@@ -220,7 +223,7 @@ def monte_carlo():
             """
             init = [random_y, random_z, random_v0*np.cos(random_theta), random_v0*np.sin(random_theta)]
             y_points, z_points, v_y_points, v_z_points = RK4(init)
-            hits_backboard, index, y_backboard, z_backboard, v_y_backboard, v_z_backboard = backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points,T)
+            hits_backboard, y_backboard, z_backboard, v_y_backboard, v_z_backboard = backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points)
 
             """
             We only care about when the ball hits the backboard.
@@ -236,39 +239,35 @@ def monte_carlo():
                     Keep track of the index where the ball hits the backboard if it goes in the
                     hoop and the y and z positions and velocities of the ball for that shot.
                     """
-                    hit_indices.append(index)
-                    y.append(y_points)
-                    z.append(z_points)
-                    v_y.append(v_y_points)
-                    v_z.append(v_z_points)
+                    y[i].append(y_points)
+                    z[i].append(z_points)
+                    v_y[i].append(v_y_points)
+                    v_z[i].append(v_z_points)
             else:
                 shots_hit_backboard -= 1
-
-        """
-        If at least one shot hits the backboard, add the percent of shots that go in
-        for that angle to our array.
-        """
         try:
             percent_in.append(shots_made/shots_hit_backboard)
-            if shots_made/shots_hit_backboard >= most_in: #not sure what I should do with this/how I should change most_in in the body of the nested for loop
-                best.append(phi)
-                most.append(shots_made/shots_hit_backboard)
         except:
             percent_in.append(-1)
+    highest_percent = np.max(percent_in)
+    index = percent_in.index(highest_percent)
+    best_phi = backboard_angles[index]
 
-
-    return best, index, most, y, z, v_y, v_z
+    return best_phi,highest_percent,y[index],z[index],v_y[index],v_z[index]
 
 def main():
     height_backboard = 1.0668
-
-    phi,num_in,y_points,z_points,v_y_points,v_z_points =  monte_carlo()
-    print(phi,num_in)
-    for i in range(len(y_points)):
-        if num_in[i] != 0:
-            plt.plot(y_points[i],z_points[i])
-            plt.plot(np.linspace(0,height_backboard*np.sin(phi[i]),1000),np.linspace(3.048,3.048+height_backboard*np.cos(phi[i]),1000))
+    phi,highest_percent,y,z,v_y,v_z = monte_carlo()
+    for i in range(len(y)):
+        plt.plot(y[i],z[i])
+    if phi <= np.pi/2 and phi >= 0:
+        plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
+    elif phi >= np.pi/2 and phi <= np.pi:
+        plt.plot(np.linspace(0,-height_backboard*np.cos(np.pi-phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(np.pi-phi),1000))
+    plt.axis('scaled')
     plt.show()
+    print(phi,highest_percent)
+
 
 if __name__ == "__main__":
     main()
