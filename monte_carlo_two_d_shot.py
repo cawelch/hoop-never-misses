@@ -108,6 +108,18 @@ def backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points):
                     index = i
                     hits_backboard = True
 
+    #Checks whether the ball hits the wrong side of the backboard
+    if phi <= np.pi/2 and hits_backboard:
+        print("1")
+        #If the ball is in the downward part of its trajectory and coming down at a more vertical angle than phi
+        if v_z_points[index] < 0 and np.arctan(z_points[index]/y_points[index]) >= phi:
+            hits_backboard = False
+            print("2")
+    elif phi >= np.pi/2 and hits_backboard:
+        #If the ball is in the upward part of its trajectory and coming up at an angle
+        if v_z_points[index] > 0 and np.arctan(z_points[index]/y_points[index]) <= phi:
+            hits_backboard = False
+
     if hits_backboard:
         y_before = y_points[:index]
         z_before = z_points[:index]
@@ -252,6 +264,7 @@ def monte_carlo():
     highest_percent = np.max(percent_in)
     index = percent_in.index(highest_percent)
     best_phi = backboard_angles[index]
+    print(y)
 
     return best_phi,highest_percent,y[index],z[index],v_y[index],v_z[index]
 
