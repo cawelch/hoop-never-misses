@@ -12,7 +12,8 @@ import numpy as np
 import pylab as plt
 from scipy.integrate import odeint
 
-eps = 1e-1 # margin of error when checking if two quantities are equal
+eps_backboard = 1e-2 # margin of error when checking if two quantities are equal
+eps_rim = 1e-1
 
 
 """
@@ -37,11 +38,11 @@ def f(r):
     v_y = r[2]
     v_z = r[3]
 
-    fy = v_y
+    fy = -v_y
     fz = v_z
 
-    f_v_y = coef*fy*np.sqrt(fy**2+fz**2)/(2*m)
-    f_v_z = coef*fz*np.sqrt(fx**2+fz**2)/(2*m)-g
+    f_v_y = -coef*fy*np.sqrt(fy**2+fz**2)/(2*m)
+    f_v_z = coef*fz*np.sqrt(fy**2+fz**2)/(2*m)-g
 
     return np.array([fy, fz, f_v_y, f_v_z], float)
 
@@ -89,7 +90,7 @@ distance_backboard - float value, which will be changed for different shots
 Returns: new_y, new_z, new_v_y, new_v_z - arrays of the original y and z
         positions or velocities of the shot until it hits the backboard
 """
-def elastic(y_points, z_points, v_y_points, v_z_points, T, distance_backboard):
+def elastic(y_points, z_points, v_y_points, v_z_points, T):
     C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
     t = T[1]-T[0]
@@ -100,13 +101,30 @@ def elastic(y_points, z_points, v_y_points, v_z_points, T, distance_backboard):
     new_v_z = []
 
     for i in range(length):
-        if not (np.absolute(y_points[i]+radius-distance_backboard) <= eps and
-            z_points[i] >= 3.048 and z_points[i] <= 4.1148):
+        y = 0
+        z_max = 4.1148
+        z_min = 3.048
 
-            new_y.append(y_points[i])
-            new_z.append(z_points[i])
-            new_v_y.append(v_y_points[i])
-            new_v_z.append(v_z_points[i])
+        #checks if the ball comes within the tolerance of the backboard in the
+        #y directino
+        if not (np.absolute(y_points[i]) <= eps_backboard):
+            #checks if any point on the circumference of the circle hits the z range
+            #of the backboard
+            try:
+                if not (z_points[i]+np.sqrt(radius**2-(y-y_points[i])**2) >= z_min and
+                    z_points[i]+np.sqrt(radius**2-(y-y_points[i])**2) <= z_max):
+                    
+                    new_y.append(y_points[i])
+                    new_z.append(z_points[i])
+                    new_v_y.append(v_y_points[i])
+                    new_v_z.append(v_z_points[i])
+            except:
+                #if the square root can't be evaluated, then the y value is too
+                #large in comparison to the radius, so it won't hit the backboard
+                new_y.append(y_points[i])
+                new_z.append(z_points[i])
+                new_v_y.append(v_y_points[i])
+                new_v_z.append(v_z_points[i])
 
         else:
             return new_y, new_z, new_v_y, new_v_z
@@ -120,38 +138,52 @@ distance_backboard - starting distance from the backboard
 
 Returns: boolean value indicating whether the ball went through the hoop's dimensions
 """
-def in_basket(y_points, z_points, distance_backboard):
+def in_basket(y_points, z_points):
     C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
     shot_made = False
 
     for i in range(len(y_points)):
-        if np.absolute(z_points[i]-3.048) <= eps:
-            if ((y_points[i]-radius) >= (distance_backboard-0.6) and
-                (y_points[i]+radius) <= (distance_backboard-0.15)):
+        #here I have whether the centre of the ball goes through the hoop
+        if np.absolute(z_points[i]-3.048) <= eps_rim:
+            if ((y_points[i]+radius) <= (0.6) and (y_points[i]-radius) >= (0.15)):
                 shot_made = True
                 return shot_made
 
     return False
 
 
-def backboard(y,z,v_y,v_z,T,distance_backboard):
+def backboard(y,z,v_y,v_z,T):
+    C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
+    radius = C/(2*np.pi)
     try:
-        y_before, z_before, v_y_before, v_z_before = elastic(y, z, v_y, v_z, T, distance_backboard)
+        y_before, z_before, v_y_before, v_z_before = elastic(y, z, v_y, v_z, T)
         backboard_hit = [y_before[-1],z_before[-1],-1*v_y_before[-1],v_z_before[-1]]
         y_after, z_after, v_y_after, v_z_after = RK4(backboard_hit)
         y = y_before + y_after
         z = z_before + z_after
         v_y = v_y_before + v_y_after
         v_z = v_z_before + v_z_after
-
     except:
         print("Ball does not come in contact with the backboard.")
 
-    print(in_basket(y,z,distance_backboard))
-    plt.plot(y,z)
-    plt.plot(np.linspace(distance_backboard-0.6,distance_backboard-0.15,100),[3.048]*100)
-    plt.plot([distance_backboard]*100,np.linspace(3.048,4.1148,100))
+    print(in_basket(y,z))
+
+    """
+    Plots the trajectory, backboard, tolerance levels for backboard, hoop and
+    area of the hoop that the centre of the basketball can go through for the
+    whole basketball to make it.
+    """
+    plt.plot(y,z,'.')
+    plt.plot(np.linspace(0.6,0.15,100),[3.048]*100)
+    plt.plot([0.15+radius]*100,np.linspace(3.148,2.948,100))
+    plt.plot([0.6-radius]*100,np.linspace(3.148,2.948,100))
+
+    plt.plot([0]*100,np.linspace(3.048,4.1148,100))
+    plt.plot([-.01]*100,np.linspace(3.048,4.1148,100))
+    plt.plot([.01]*100,np.linspace(3.048,4.1148,100))
+
+    plt.axis("equal")
     plt.show()
 
 
@@ -172,13 +204,13 @@ def main():
     theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
     v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
     start_height = 1.8
-    distance_backboard = 2.5 #arbitrary distance from backboard in m
+    start_y = 2.5 #arbitrary distance from backboard in m
 
 
-    init = [0, start_height, v0*np.cos(theta), v0*np.sin(theta)]
+    init = [start_y, start_height, v0*np.cos(theta), v0*np.sin(theta)]
     y_points, z_points, v_y_points, v_z_points = RK4(init)
 
-    backboard(y_points,z_points,v_y_points,v_z_points,T,distance_backboard)
+    backboard(y_points,z_points,v_y_points,v_z_points,T)
 
 
 

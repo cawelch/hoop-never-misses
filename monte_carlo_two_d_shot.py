@@ -12,8 +12,8 @@ Brief: First attempt at running a Monte Carlo simulation for a 2D shot to form
 import numpy as np
 import pylab as plt
 
-eps = 1e-1 #margin of error when checking if two quantities are equal
-
+eps_backboard = 1e-2 #margin of error when checking if two quantities are equal
+eps_rim = 1e-1
 
 """
 Function used to set up the second order differential equations for the
@@ -94,32 +94,33 @@ def backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points):
     length = len(y_points) #this could have been any of the four arrays since they're the same length
     height_backboard = 1.0668
     hits_backboard = False
+    plt.plot(y_points,z_points)
 
-    index = -1
     for i in range(length):
         if phi <= np.pi/2 and phi >= 0:
-            if y_points[i]-radius >= 0 and y_points[i]+radius <= height_backboard*np.cos(phi):
-                if z_points[i]-radius >= 3.048 and z_points[i]+radius <= 3.048+height_backboard+np.sin(phi):
+            if np.absolute(y_points[i]) <= eps_backboard and y_points[i] <= height_backboard*np.cos(phi):
+                print(z_points[i])
+                if z_points[i] >= 3.048 and z_points[i] <= 3.048+height_backboard*np.sin(phi):
+                    print("2")
                     index = i
                     hits_backboard = True
         elif phi > np.pi/2 and phi <= np.pi:
-            if y_points[i]-radius >= -height_backboard*np.cos(np.pi-phi) and y_points[i]+radius <= 0:
-                if z_points[i]-radius >= 3.048 and z_points[i]+radius <= 3.048+height_backboard*np.sin(np.pi-phi):
+            if y_points[i] >= height_backboard*np.cos(phi) and y_points[i] <= 0:
+                if z_points[i] >= 3.048 and z_points[i] <= 3.048+height_backboard*np.sin(phi):
                     index = i
                     hits_backboard = True
 
+    """ deal with this later
     #Checks whether the ball hits the wrong side of the backboard
     if phi <= np.pi/2 and hits_backboard:
-        print("1")
         #If the ball is in the downward part of its trajectory and coming down at a more vertical angle than phi
         if v_z_points[index] < 0 and np.arctan(z_points[index]/y_points[index]) >= phi:
             hits_backboard = False
-            print("2")
     elif phi >= np.pi/2 and hits_backboard:
         #If the ball is in the upward part of its trajectory and coming up at an angle
         if v_z_points[index] > 0 and np.arctan(z_points[index]/y_points[index]) <= phi:
             hits_backboard = False
-
+    """
     if hits_backboard:
         y_before = y_points[:index]
         z_before = z_points[:index]
@@ -128,7 +129,6 @@ def backboard_hit_location(phi,y_points,z_points,v_y_points,v_z_points):
 
         v = np.sqrt((v_y_before[-1])**2+(v_z_before[-1])**2)
         theta = np.arctan(v_z_before[-1]/v_y_before[-1])
-
 
         if phi > np.pi/2 and phi <= np.pi:
             if v_z_before[-1] > 0:
@@ -171,9 +171,8 @@ def in_basket(y_points, z_points):
     shot_made = False
 
     for i in range(len(y_points)):
-        if np.absolute(z_points[i]-3.048) <= eps:
-            if ((y_points[i]+radius) <= 0.6 and
-                (y_points[i]-radius) >= 0.15):
+        if np.absolute(z_points[i]-3.048) <= eps_rim:
+            if ((y_points[i]+radius) <= 0.6 and (y_points[i]-radius) >= 0.15):
                 shot_made = True
                 return shot_made
 
@@ -192,8 +191,8 @@ def monte_carlo():
     """
     Different initial conditions for the shot to randomly choose from.
     """
-    number_of_shots = 100
-    backboard_angles = np.linspace(np.pi/6,5*np.pi/6,1000)
+    number_of_shots = 50
+    backboard_angles = np.linspace(np.pi/6,5*np.pi/6,100)
     start_ys = np.arange(0,10,0.1)
     start_zs = np.arange(1,2,0.1)
     v0s = np.arange(4,9,0.1)
@@ -264,20 +263,18 @@ def monte_carlo():
     highest_percent = np.max(percent_in)
     index = percent_in.index(highest_percent)
     best_phi = backboard_angles[index]
-    print(y)
 
     return best_phi,highest_percent,y[index],z[index],v_y[index],v_z[index]
 
 def main():
     height_backboard = 1.0668
     phi,highest_percent,y,z,v_y,v_z = monte_carlo()
-    for i in range(len(y)):
-        plt.plot(y[i],z[i])
+    print(y,z)
     if phi <= np.pi/2 and phi >= 0:
         plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
     elif phi >= np.pi/2 and phi <= np.pi:
-        plt.plot(np.linspace(0,-height_backboard*np.cos(np.pi-phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(np.pi-phi),1000))
-    plt.axis('scaled')
+        plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
+    plt.axis("scaled")
     plt.show()
     print(phi,highest_percent)
 

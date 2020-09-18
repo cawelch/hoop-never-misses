@@ -13,7 +13,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-eps = 1e-1 #margin of error when checking if two quantities are equal
+eps_backboard = 1e-2 #margin of error when checking if two quantities are equal
+eps_rim = 1e-1
 
 """
 Function used to set up the second order differential equations for the
@@ -105,6 +106,7 @@ def backboard(x_points, y_points, z_points, v_x_points, v_y_points, v_z_points):
 
     index = -1
     for i in range(len(y_points)):
+        #how to extend lines 114-115 to 3D code
         if np.absolute(y_points[i]-radius) <= eps:
             index = i
 
