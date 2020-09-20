@@ -124,7 +124,7 @@ def RK4(init,phi):
 
     r = np.array(init, float)
     h = 0.01
-    while r[1] >= 0:
+    while r[1] >= 3.048 or r[3] > 0:
         if hit_backboard(phi,r[0],r[1]):
             backboard = True
             y_bounce, z_bounce, v_y_bounce, v_z_bounce = elastic_bounce(phi,r[0],r[1],r[2],r[3])
@@ -143,7 +143,7 @@ def RK4(init,phi):
 
     if backboard:
         r = np.array([y_bounce,z_bounce,v_y_bounce,v_z_bounce],float)
-        while r[1] >= 0:
+        while r[1] >= 3.048 or r[3] > 0:
             y_points.append(r[0])
             z_points.append(r[1])
             v_y_points.append(r[2])
@@ -191,7 +191,7 @@ Parameters: phi - angle that the backboard makes with the horizontal
 Returns: float value of the percent of shots that go in the hoop
 """
 def percent_in(phi):
-    num_shots = 100
+    num_shots = 10000
     shots_made = 0
     start_ys = np.arange(0,10,0.1)
     start_zs = np.arange(1,2,0.1)
@@ -212,9 +212,9 @@ def percent_in(phi):
             if in_basket(y_points[j],z_points[j]):
                 shots_made += 1
                 plt.plot(y_points,z_points)
-            print(shots_made)
 
-    return np.float(shots_made/num_shots)
+    pct = np.float(shots_made)/np.float(num_shots)
+    return pct
 
 
 def main():
