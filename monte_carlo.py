@@ -3,7 +3,7 @@ file: monte_carlo.py
 
 Author: Caitlin Welch
 Date created: September 20, 2020
-Date modified: September 20, 2020
+Date modified: September 24, 2020
 
 Brief: Attempt at running a Monte Carlo simulation for a 2D shot to form a
         continuous curved bacboard.
@@ -57,22 +57,36 @@ def hit_backboard(phi,y,z):
     radius = C/(2*np.pi)
     height_backboard = 1.0668
     eps_backboard = 1e-2
+    slope = np.tan(phi)
+
+    """
+    z_range = np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000)
+    y_range = (z_range-3.048)/np.tan(phi)
+    """
 
     theta = np.linspace(0,2*np.pi,500)
-    circle_ys = radius*np.cos(theta)
-    circle_zs = radius*np.sin(theta)
+    circle_ys = y+radius*np.cos(theta)
+    circle_zs = z+radius*np.sin(theta)
+    #plt.plot(circle_ys,circle_zs)
 
     for i in range(len(circle_ys)):
+        #plt.plot(circle_ys[i],circle_zs[i],'.')
         if phi <= np.pi/2:
-            if np.absolute(y-circle_ys[i]) >= eps_backboard and y+circle_ys[i] <= height_backboard*np.cos(phi):
-                if z-circle_zs[i] >= 3.048 and z+circle_zs[i] <= 3.048+height_backboard*np.sin(phi):
-                    return True
+            if np.absolute(circle_ys[i]) >= eps_backboard and circle_ys[i] <= height_backboard*np.cos(phi):
+                if circle_zs[i] >= 3.048 and circle_zs[i] <= 3.048+height_backboard*np.sin(phi):
+                    #print('within rectangle')
+                    if np.absolute(circle_zs[i]-3.048-slope*circle_ys[i]) <= eps_backboard:
+                        #print('hit')
+                        return True
         else:
-            if y-circle_ys[i] >= height_backboard*np.cos(phi) and y+circle_ys[i] <= eps_backboard:
-                if z-circle_zs[i] >= 3.048 and z+z_points[i] <= 3.048+height_backboard*np.sin(phi):
-                    return True
+            if circle_ys[i] >= height_backboard*np.cos(phi) and circle_ys[i] <= eps_backboard:
+                if circle_zs[i] >= 3.048 and circle_zs[i] <= 3.048+height_backboard*np.sin(phi):
+                    #print('within rectangle')
+                    if np.absolute(circle_zs[i]-3.048-slope*circle_ys[i]) <= eps_backboard:
+                        #print('hit')
+                        return True
 
-        return False
+    return False
 
 """
 For a shot that hits the backboard, determines the y and z positions and velocities
@@ -92,18 +106,31 @@ def elastic_bounce(phi,y,z,v_y,v_z):
     y_after = y
     z_after = z
 
-    if phi >= np.pi/2:
-        v_y_after = -v*np.cos(2*phi-theta-np.pi/2)
+    if phi < np.pi/2:
+        #print(v_z)
         if v_z > 0:
-            v_z_after = -v*np.sin(2*phi-theta-np.pi/2)
+            alpha = np.pi/2-2*phi-theta
+            #alpha = np.pi/2-2*phi+theta
+            #print(alpha)
+            v_y_after = v*np.cos(alpha)
+            v_z_after = v*np.sin(alpha)
         else:
-            v_z_after = v*np.sin(2*phi-theta-np.pi/2)
+            alpha = np.pi/2-2*phi+theta
+            v_y_after = v*np.cos(alpha)
+            v_z_after = v*np.sin(alpha)
+    elif phi == np.pi/2:
+        v_y_after = -v_y
+        v_z_after = v_z
     else:
-        v_y_after = -v*np.cos(np.pi/2+theta-2*phi)
         if v_z > 0:
-            v_z_after = -v*np.cos(np.pi/2+theta-2*phi)
+            alpha = -np.pi/2+2*phi+theta
+            v_z_after = v*np.sin(alpha)
+            v_y_after = v*np.cos(alpha)
         else:
-            v_z_after = v*np.cos(np.pi/2+theta-2*phi)
+            alpha = np.pi-2*phi+theta
+            v_y_after = v*np.cos(alpha)
+            v_z_after = -v*np.sin(alpha)
+
 
     return y_after,z_after,v_y_after,v_z_after
 
@@ -121,16 +148,18 @@ def RK4(init,phi):
     v_y_points = []
     v_z_points = []
     backboard = False
+    height_backboard = 1.0668
 
     r = np.array(init, float)
     h = 0.01
-    while r[1] >= 3.048 or r[3] > 0:
+    while (r[1] >= 3.048 or r[3] > 0) and r[0] >= height_backboard*np.cos(phi)-0.1:
+        #print("y=",r[0])
         y_points.append(r[0])
         z_points.append(r[1])
         v_y_points.append(r[2])
         v_z_points.append(r[3])
 
-        if hit_backboard(phi,r[0],r[1]):
+        if (not backboard) and hit_backboard(phi,r[0],r[1]):
             backboard = True
             y_bounce, z_bounce, v_y_bounce, v_z_bounce = elastic_bounce(phi,r[0],r[1],r[2],r[3])
             r = np.array([y_bounce,z_bounce,v_y_bounce,v_z_bounce],float)
@@ -142,10 +171,10 @@ def RK4(init,phi):
             r += (k1+2*k2+2*k3+k4)/6
 
 
-    if backboard:
-        return y_points, z_points, v_y_points, v_z_points
-    else:
-        return [],[],[],[]
+    #if backboard:
+    return y_points, z_points, v_y_points, v_z_points
+    #else:
+    #    return [],[],[],[]
 
 
 """
@@ -170,49 +199,77 @@ def in_basket(y,z):
 
 """
 For a given angle of the backboard, determines how many randomly generated
-shots go in teh backboard.
+shots go in the backboard.
 
 Parameters: phi - angle that the backboard makes with the horizontal
 
 Returns: float value of the percent of shots that go in the hoop
 """
 def percent_in(phi):
-    num_shots = 1
+    num_shots = 10
     shots_made = 0
-    start_ys = np.arange(0,10,0.1)
-    start_zs = np.arange(1,2,0.1)
-    v0s = np.arange(4,9,0.1)
-    start_angles = np.arange(105,140,0.1)
+    smallest_y = 4.1148/(np.tan(np.arctan(1.0668/.6)))
+    start_ys =  np.array([2.5]) #np.arange(smallest_y,10,0.1)
+    start_zs =  np.array([1.8]) #np.arange(1,2,0.1)
+    v0s =  np.array([7.5]) #np.arange(4,9,0.1)
+    start_angles =  np.array([125]) #np.arange(105,140,0.1)
     start_thetas = np.pi/180*start_angles
 
     for i in range(num_shots):
-        random_y = np.random.choice(start_ys)
-        random_z = np.random.choice(start_zs)
+        random_y =  np.random.choice(start_ys)
+        random_z =  np.random.choice(start_zs)
         random_v0 = np.random.choice(v0s)
         random_theta = np.random.choice(start_thetas)
 
         init = [random_y,random_z,random_v0*np.cos(random_theta),random_v0*np.sin(random_theta)]
         y_points,z_points,v_y_points,v_z_points = RK4(init,phi)
+        plt.plot(y_points,z_points)
 
         for j in range(len(y_points)):
             if in_basket(y_points[j],z_points[j]):
                 shots_made += 1
-                plt.plot(y_points,z_points)
+                break
+                #plt.plot(y_points,z_points)
 
     pct = np.float(shots_made)/np.float(num_shots)
     return pct
+
+
+"""
+Finds the best angle for the backboard, from a given array of backboard angles.
+
+Parameters: phi_array - array of backboard angles
+
+Returns: best_phi - idea backboard angle from the array
+        best_pct - percentage of random shots that go in for the best_phi
+                    backboard angle (note best_pct is the greatest of all percentages)
+"""
+def best_angle(phi_array):
+    height_backboard = 1.0668
+    best_pct = 0.0
+    best_phi = np.pi/2 #assume the best angle is the angle that the backboard is in regulation and change this if there's a better angle
+
+    for phi in phi_array:
+        plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
+        if percent_in(phi) > best_pct:
+            best_pct = percent_in(phi)
+            best_phi = phi
+
+    return best_phi, best_pct
 
 
 def main():
     height_backboard = 1.0668
     C = 0.7493 # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
-    phi = np.pi/2
-    print(percent_in(phi))
-    if phi <= np.pi/2 and phi >= 0:
-        plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
-    elif phi >= np.pi/2 and phi <= np.pi:
-        plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
+    phi_array = np.array([np.pi/2,np.pi/3])
+    best_phi, best_pct = best_angle(phi_array)
+    print(best_phi,best_pct)
+
+    """
+    Plotting for the backboard and hoop.
+    """
+    #plt.plot(np.linspace(0,height_backboard*np.cos(best_phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(best_phi),1000))
     plt.plot(np.linspace(0.6,0.15,100),[3.048]*100)
     plt.plot([0.15+radius]*100,np.linspace(3.148,2.948,100))
     plt.plot([0.6-radius]*100,np.linspace(3.148,2.948,100))
