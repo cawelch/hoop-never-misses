@@ -3,7 +3,7 @@ file: monte_carlo.py
 
 Author: Caitlin Welch
 Date created: September 20, 2020
-Date modified: September 24, 2020
+Date modified: September 28, 2020
 
 Brief: Attempt at running a Monte Carlo simulation for a 2D shot to form a
         continuous curved bacboard.
@@ -208,7 +208,7 @@ Parameters: phi - angle that the backboard makes with the horizontal
 Returns: float value of the percent of shots that go in the hoop
 """
 def percent_in(phi):
-    num_shots = 10000
+    num_shots = 100
     num_backboard = 0
     shots_made = 0
     smallest_y = 4.1148/(np.tan(np.arctan(1.0668/.6)))
@@ -237,7 +237,7 @@ def percent_in(phi):
                 plt.plot(y_points,z_points)
                 break
 
-    print(num_shots,num_backboard,shots_made)
+    #print(num_shots,num_backboard,shots_made)
     try:
         #percent is number of shots made for shots that hit the backboard. If
         #no shots hit the backboard, set the percent to 0.
@@ -259,26 +259,63 @@ Returns: best_phi - idea backboard angle from the array
 def best_angle(phi_array):
     height_backboard = 1.0668
     best_pct = 0.0
+    num_angles = int(len(phi_array)/10)
 
-    for phi in phi_array:
-        plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
+    for i in range(num_angles):
+        phi = np.random.choice(phi_array)
+        #plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
         pct = percent_in(phi)
-        print("Percent in: ",pct,"Angle: ",phi)
+        #print("Percent in: ",pct,"Angle: ",phi)
         if pct >= best_pct:
             best_pct = pct
             best_phi = phi
 
-    return best_phi, best_pct
+    return best_phi
+
+
+"""
+Optimization function, which narrows the range of angles tested but with the same
+number of points, to try to find convergence for the backboard angle with the
+highest percent of shots made.
+
+Returns: central_phi - the angle at which the highest percentage of shots in
+        converges to
+"""
+def optimize_angle():
+    height_backboard = 1.0668
+    central_phi = [np.pi/2]
+    n = 2 #we start by testing points plus/minus pi/2 of the central_phi
+    N = 1000 #number of angles to test
+    tolerance = 1e-6
+    diff = np.pi/2 #start at value of pi/2 because we know the while loop condition will be true
+    index = 0
+
+    while diff >= tolerance:
+        phi_array = np.linspace(central_phi[index]-np.pi/n,central_phi[index]+np.pi/n,N)
+        central_phi.append(best_angle(phi_array))
+        plt.plot(np.linspace(0,height_backboard*np.cos(central_phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(central_phi),1000))
+        index += 1
+        n *= 2
+        diff = np.absolute(central_phi[index]-central_phi[index-1])
+        print(diff,tolerance)
+
+    print(central_phi)
+    return central_phi[-1]
+
 
 
 def main():
     height_backboard = 1.0668
     C = 0.7493 # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
+
+    print("Optimized angle is: ",optimize_angle())
+
+    """
     phi_array = np.array([np.pi/4,np.pi/3,np.pi/2,2*np.pi/3,3*np.pi/4])
     best_phi, best_pct = best_angle(phi_array)
     #print("Best angle: ",best_phi,"Percent of shots made: ",best_pct)
-
+    """
     """
     Plotting for the backboard and hoop.
     """
