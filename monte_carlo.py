@@ -3,7 +3,7 @@ file: monte_carlo.py
 
 Author: Caitlin Welch
 Date created: September 20, 2020
-Date modified: September 28, 2020
+Date modified: September 30, 2020
 
 Brief: Attempt at running a Monte Carlo simulation for a 2D shot to form a
         continuous curved bacboard.
@@ -208,21 +208,16 @@ Parameters: phi - angle that the backboard makes with the horizontal
 Returns: float value of the percent of shots that go in the hoop
 """
 def percent_in(phi):
-    num_shots = 100
+    num_shots = 1000
     num_backboard = 0
     shots_made = 0
     smallest_y = 4.1148/(np.tan(np.arctan(1.0668/.6)))
-    start_ys = np.arange(smallest_y,10,0.1) #np.array([2.5])
-    start_zs = np.arange(1.5,2,0.1) #np.array([1.8])
-    v0s = np.arange(4,9,0.1) #np.array([7.5])
-    start_angles = np.arange(105,140,0.1) #np.array([125])
-    start_thetas = np.pi/180*start_angles
 
     for i in range(num_shots):
-        random_y =  np.random.choice(start_ys)
-        random_z =  np.random.choice(start_zs)
-        random_v0 = np.random.choice(v0s)
-        random_theta = np.random.choice(start_thetas)
+        random_y =  np.random.rand(smallest_y,10)
+        random_z =  np.random.rand(1.5,2)
+        random_v0 = np.random.rand(4,9)
+        random_theta = np.random.rand(0,np.pi)
 
         init = [random_y,random_z,random_v0*np.cos(random_theta),random_v0*np.sin(random_theta)]
         y_points,z_points,v_y_points,v_z_points = RK4(init,phi)
@@ -234,7 +229,7 @@ def percent_in(phi):
         for j in range(len(y_points)):
             if in_basket(y_points[j],z_points[j]):
                 shots_made += 1
-                plt.plot(y_points,z_points)
+                #plt.plot(y_points,z_points)
                 break
 
     #print(num_shots,num_backboard,shots_made)
@@ -256,13 +251,13 @@ Returns: best_phi - idea backboard angle from the array
         best_pct - percentage of random shots that go in for the best_phi
                     backboard angle (note best_pct is the greatest of all percentages)
 """
-def best_angle(phi_array):
+def best_angle(min_phi,max_phi):
     height_backboard = 1.0668
     best_pct = 0.0
-    num_angles = int(len(phi_array)/10)
+    num_angles = 100
 
     for i in range(num_angles):
-        phi = np.random.choice(phi_array)
+        phi = np.random.rand(min_phi,max_phi)
         #plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
         pct = percent_in(phi)
         #print("Percent in: ",pct,"Angle: ",phi)
@@ -285,19 +280,19 @@ def optimize_angle():
     height_backboard = 1.0668
     central_phi = [np.pi/2]
     n = 2 #we start by testing points plus/minus pi/2 of the central_phi
-    N = 1000 #number of angles to test
-    tolerance = 1e-6
+    tolerance = 1e-4
     diff = np.pi/2 #start at value of pi/2 because we know the while loop condition will be true
     index = 0
 
     while diff >= tolerance:
-        phi_array = np.linspace(central_phi[index]-np.pi/n,central_phi[index]+np.pi/n,N)
-        central_phi.append(best_angle(phi_array))
+        min_phi = central_phi[index]-np.pi/n
+        max_phi = central_phi[index]+np.pi/n
+        central_phi.append(best_angle(min_phi,max_phi))
         plt.plot(np.linspace(0,height_backboard*np.cos(central_phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(central_phi),1000))
         index += 1
         n *= 2
         diff = np.absolute(central_phi[index]-central_phi[index-1])
-        print(diff,tolerance)
+        print(np.absolute(diff-tolerance))
 
     print(central_phi)
     return central_phi[-1]
