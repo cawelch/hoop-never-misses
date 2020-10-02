@@ -3,7 +3,7 @@ file: monte_carlo.py
 
 Author: Caitlin Welch
 Date created: September 20, 2020
-Date modified: September 30, 2020
+Date modified: October 1, 2020
 
 Brief: Attempt at running a Monte Carlo simulation for a 2D shot to form a
         continuous curved bacboard.
@@ -207,19 +207,20 @@ Parameters: phi - angle that the backboard makes with the horizontal
 
 Returns: float value of the percent of shots that go in the hoop
 """
-def percent_in(phi):
+def percent_in(phi #change this to take in an array):
     num_shots = 1000
     num_backboard = 0
     shots_made = 0
     smallest_y = 4.1148/(np.tan(np.arctan(1.0668/.6)))
 
     for i in range(num_shots):
-        random_y =  np.random.rand(smallest_y,10)
-        random_z =  np.random.rand(1.5,2)
-        random_v0 = np.random.rand(4,9)
-        random_theta = np.random.rand(0,np.pi)
+        random_y =  np.random.uniform(smallest_y,10)
+        random_z =  np.random.uniform(1.5,2)
+        random_v0 = np.random.uniform(4,9)
+        random_theta = np.random.uniform(0,np.pi)
 
         init = [random_y,random_z,random_v0*np.cos(random_theta),random_v0*np.sin(random_theta)]
+        #add for loop here to iterate through all the backboard angles
         y_points,z_points,v_y_points,v_z_points = RK4(init,phi)
         #plt.plot(y_points,z_points)
 
@@ -257,9 +258,9 @@ def best_angle(min_phi,max_phi):
     num_angles = 100
 
     for i in range(num_angles):
-        phi = np.random.rand(min_phi,max_phi)
+        phi = np.random.uniform(min_phi,max_phi)
         #plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
-        pct = percent_in(phi)
+        pct = percent_in(phi) #have percent_in return an array of percents for each phi
         #print("Percent in: ",pct,"Angle: ",phi)
         if pct >= best_pct:
             best_pct = pct
@@ -280,11 +281,12 @@ def optimize_angle():
     height_backboard = 1.0668
     central_phi = [np.pi/2]
     n = 2 #we start by testing points plus/minus pi/2 of the central_phi
-    tolerance = 1e-4
+    tolerance = 1e-6
     diff = np.pi/2 #start at value of pi/2 because we know the while loop condition will be true
     index = 0
 
     while diff >= tolerance:
+        print("Tolerance: ",index)
         min_phi = central_phi[index]-np.pi/n
         max_phi = central_phi[index]+np.pi/n
         central_phi.append(best_angle(min_phi,max_phi))
