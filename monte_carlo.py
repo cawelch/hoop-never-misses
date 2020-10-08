@@ -238,11 +238,10 @@ def percent_in(phi_array):
     try:
         #percent is number of shots made for shots that hit the backboard. If
         #no shots hit the backboard, set the percent to 0.
-        print(shots_made,num_backboard)
+        #print(shots_made,num_backboard)
         pct = np.float(shots_made)/np.float(num_backboard)
     except:
         pct = 0
-    print(pct)
     return pct
 
 
@@ -266,6 +265,7 @@ def best_angle(min_phi,max_phi):
         phi_array.append(phi)
         #plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
     pct = percent_in(phi_array)
+    print(pct)
     best_index = np.argmax(pct)
     best_pct = pct[best_index]
     best_phi = phi_array[best_index]
