@@ -18,4 +18,6 @@ echo "Running plot script on a single CPU core"
 python monte_carlo.py > monte_carlo_output.txt 
 sendmail cawelch@davidson.edu  < monte_carlo_output.txt
 
+echo "Done"
+
 date
