@@ -1,0 +1,20 @@
+Starting SLURM job...
+compute2.davidson.edu
+/home/DAVIDSON/cawelch/hoop-never-misses
+compute2.davidson.edu
+Thu Oct  8 22:09:07 EDT 2020
+Running plot script on a single CPU core
+Traceback (most recent call last):
+  File "monte_carlo.py", line 357, in <module>
+    main()
+  File "monte_carlo.py", line 336, in main
+    print(move_points())
+  File "monte_carlo.py", line 322, in move_points
+    phi = optimize_angle(y[j-1],z[j-1],z[j])
+  File "monte_carlo.py", line 304, in optimize_angle
+    central_phi.append(best_angle(min_phi,max_phi,fixed_y,fixed_z,next_z))
+  File "monte_carlo.py", line 271, in best_angle
+    best_pct = pct[index]
+NameError: name 'index' is not defined
+Done
+Thu Oct  8 22:31:39 EDT 2020
