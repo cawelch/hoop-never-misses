@@ -270,6 +270,16 @@ def best_angle(min_phi,max_phi,fixed_y,fixed_z,next_z):
     best_index = np.argmax(pct)
     best_pct = pct[index]
     best_phi = phi_array[index]
+    
+    if 0 in num_backboard:
+        pct = []
+        for num in num_backboard:
+            if num == 0:
+                pct.append(0)
+            else:
+                pct.append(np.float(shots_made)/np.float(num_backboard))
+    else:
+        pct = np.float(shots_made)/np.float(num_backboard)
 
 
         #print("Percent in: ",pct,"Angle: ",phi)
