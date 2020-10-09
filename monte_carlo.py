@@ -333,7 +333,7 @@ def main():
     C = 0.7493 # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
 
-    print(move_points)
+    print(move_points())
 
     #print("Optimized angle is: ",optimize_angle())
 
