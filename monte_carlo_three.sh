@@ -2,7 +2,7 @@
 echo "Starting SLURM job..."
 /usr/bin/hostname
 
-#SBATCH --job-name=monte_carlo              # Job name
+#SBATCH --job-name=monte_carlo_three        # Job name
 #SBATCH --mail-user=cawelch@davidson.edu    # Where to send mail
 #SBATCH --mail-type=ALL                     # Mail events (NONE, BEGIN, END, FAIL, ALL)
 #SBATCH --ntasks=1                          # Run on a single CPU
@@ -18,6 +18,5 @@ echo "Running plot script on a single CPU core"
 python monte_carlo.py > monte_carlo_output.txt 
 sendmail cawelch@davidson.edu  < monte_carlo_output.txt
 
-echo "Done"
 
 date

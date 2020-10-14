@@ -1,0 +1,23 @@
+Starting SLURM job...
+compute1.davidson.edu
+/home/DAVIDSON/cawelch/hoop-never-misses
+compute1.davidson.edu
+Sun Oct 11 14:24:31 EDT 2020
+Running plot script on a single CPU core
+Traceback (most recent call last):
+  File "monte_carlo.py", line 369, in <module>
+    main()
+  File "monte_carlo.py", line 348, in main
+    print(move_points())
+  File "monte_carlo.py", line 337, in move_points
+    plt.plot(np.linspace(y[j-1],y[j]),np.linspace(z[j-1],z[j],100))
+  File "/home/DAVIDSON/cawelch/.local/lib/python3.7/site-packages/matplotlib/pyplot.py", line 2842, in plot
+    **({"data": data} if data is not None else {}), **kwargs)
+  File "/home/DAVIDSON/cawelch/.local/lib/python3.7/site-packages/matplotlib/axes/_axes.py", line 1743, in plot
+    lines = [*self._get_lines(*args, data=data, **kwargs)]
+  File "/home/DAVIDSON/cawelch/.local/lib/python3.7/site-packages/matplotlib/axes/_base.py", line 273, in __call__
+    yield from self._plot_args(this, kwargs)
+  File "/home/DAVIDSON/cawelch/.local/lib/python3.7/site-packages/matplotlib/axes/_base.py", line 399, in _plot_args
+    raise ValueError(f"x and y must have same first dimension, but "
+ValueError: x and y must have same first dimension, but have shapes (50,) and (100,)
+Mon Oct 12 00:56:36 EDT 2020
