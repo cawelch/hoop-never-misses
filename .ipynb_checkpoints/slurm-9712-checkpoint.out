@@ -1,0 +1,21 @@
+Starting SLURM job...
+compute1.davidson.edu
+/home/DAVIDSON/cawelch/hoop-never-misses
+compute1.davidson.edu
+Sun Oct 11 14:21:43 EDT 2020
+Running plot script on a single CPU core
+Traceback (most recent call last):
+  File "monte_carlo.py", line 369, in <module>
+    main()
+  File "monte_carlo.py", line 348, in main
+    print(move_points())
+  File "monte_carlo.py", line 334, in move_points
+    phi = optimize_angle(y[j-1],z[j-1],z[j])
+  File "monte_carlo.py", line 316, in optimize_angle
+    central_phi.append(best_angle(min_phi,max_phi,fixed_y,fixed_z,next_z))
+  File "monte_carlo.py", line 266, in best_angle
+    pct = percent_in(phi,fixed_y,fixed_z,next_z)
+  File "monte_carlo.py", line 227, in percent_in
+    y_points,z_points,v_y_points,v_z_points = RK4(init,phi,fixed_y,fixed_z,next_z)
+NameError: name 'phi' is not defined
+Sun Oct 11 14:21:44 EDT 2020
