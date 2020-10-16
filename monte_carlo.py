@@ -217,11 +217,11 @@ def percent_in(phi_array,fixed_y,fixed_z,next_z):
     pct = np.array([0]*length)
     smallest_y = 4.1148/(np.tan(np.arctan(1.0668/.6)))
 
-    for i in range(num_shots):
-        random_y =  8#np.random.uniform(smallest_y,10)
-        random_z =  2#np.random.uniform(1.5,2)
-        random_v0 = 9.8#np.random.uniform(4,9)
-        random_theta = 2*np.pi/3#np.random.uniform(0,np.pi)
+    while np.amin(num_backboard) <= 1000:
+        random_y =  np.random.uniform(smallest_y,10)
+        random_z =  np.random.uniform(1.5,2)
+        random_v0 = np.random.uniform(4,9)
+        random_theta = np.random.uniform(0,np.pi)
 
         init = [random_y,random_z,random_v0*np.cos(random_theta),random_v0*np.sin(random_theta)]
         for j in range(length):
@@ -326,7 +326,7 @@ def optimize_angle(fixed_y,fixed_z,next_z):
         min_phi = central_phi[index]-np.pi/n
         max_phi = central_phi[index]+np.pi/n
         central_phi.append(best_angle(min_phi,max_phi,fixed_y,fixed_z,next_z))
-        #plt.plot(np.linspace(0,height_backboard*np.cos(central_phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(central_phi),1000))
+        plt.plot(np.linspace(0,height_backboard*np.cos(central_phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(central_phi),1000))
         index += 1
         n *= 2
         diff = np.absolute(central_phi[index]-central_phi[index-1])
@@ -335,7 +335,7 @@ def optimize_angle(fixed_y,fixed_z,next_z):
     print(central_phi)
     return central_phi[-1]
 
-
+"""
 def move_points():
     num_points = 3
     y = [0]
@@ -352,7 +352,7 @@ def move_points():
         plt.plot(np.linspace(y[j-1],y[j],100),np.linspace(z[j-1],z[j],100))
 
     return y,z
-
+"""
 
 
 def main():
@@ -360,9 +360,9 @@ def main():
     C = 0.7493 # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
 
-    print(move_points())
+    #print(move_points())
 
-    #print("Optimized angle is: ",optimize_angle())
+    print("Optimized angle is: ",optimize_angle(0,3.048,4.1148))
 
     """
     phi_array = np.array([np.pi/4,np.pi/3,np.pi/2,2*np.pi/3,3*np.pi/4])
