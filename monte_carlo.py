@@ -68,7 +68,7 @@ def hit_backboard(phi,y,z,fixed_y,fixed_z,next_z): #WILL HAVE TO ADJUST THIS FUN
     #plt.plot(circle_ys,circle_zs)
 
     for i in range(len(circle_ys)):
-        #plt.plot(circle_ys[i],circle_zs[i],'.')
+        plt.plot(circle_ys[i],circle_zs[i],'.')
         if phi < np.pi/2:
             if np.absolute(circle_ys[i]) >= eps_backboard and circle_ys[i] <= (next_z-fixed_z)/slope:
                 if circle_zs[i]-radius >= fixed_z and circle_zs[i] <= next_z:
@@ -209,40 +209,48 @@ Parameters: phi_array - array of angles that the backboard makes with the horizo
 
 Returns: float value of the percent of shots that go in the hoop
 """
-def percent_in(phi,fixed_y,fixed_z,next_z):
-    num_shots = 1000
-    #length = len(phi_array)
-    num_backboard = 0
-    shots_made = 0
+def percent_in(phi_array,fixed_y,fixed_z,next_z):
+    num_shots = 1
+    length = len(phi_array)
+    num_backboard = np.array([0]*length)
+    shots_made = np.array([0]*length)
+    pct = np.array([0]*length)
     smallest_y = 4.1148/(np.tan(np.arctan(1.0668/.6)))
 
     for i in range(num_shots):
-        random_y =  np.random.uniform(smallest_y,10)
-        random_z =  np.random.uniform(1.5,2)
-        random_v0 = np.random.uniform(4,9)
-        random_theta = np.random.uniform(0,np.pi)
+        random_y =  8#np.random.uniform(smallest_y,10)
+        random_z =  2#np.random.uniform(1.5,2)
+        random_v0 = 9.8#np.random.uniform(4,9)
+        random_theta = 2*np.pi/3#np.random.uniform(0,np.pi)
 
         init = [random_y,random_z,random_v0*np.cos(random_theta),random_v0*np.sin(random_theta)]
-        #for j in range(length):
-        y_points,z_points,v_y_points,v_z_points = RK4(init,phi,fixed_y,fixed_z,next_z)
-            #plt.plot(y_points,z_points)
+        for j in range(length):
+            y_points,z_points,v_y_points,v_z_points = RK4(init,phi_array[j],fixed_y,fixed_z,next_z)
+            plt.plot(y_points,z_points)
+            #print(num_backboard,shots_made)
+            if y_points != []:
+                num_backboard[j] += 1
 
-        if y_points != []:
-            num_backboard += 1
+            for k in range(len(y_points)):
+                if in_basket(y_points[k],z_points[k]):
+                    shots_made[j] += 1
+                        #plt.plot(y_points,z_points)
+                    break
 
-        for k in range(len(y_points)):
-            if in_basket(y_points[k],z_points[k]):
-                shots_made += 1
-                    #plt.plot(y_points,z_points)
-                break
-
-    #print(num_shots,num_backboard,shots_made)
+    print(num_shots,num_backboard,shots_made)
     try:
         #percent is number of shots made for shots that hit the backboard. If
         #no shots hit the backboard, set the percent to 0.
-        pct = np.float(shots_made)/np.float(num_backboard)
+        pct = shots_made/num_backboard
+        #print("HERE",pct)
     except:
-        pct = 0
+        for i in range(length):
+            if num_backboard[i] == 0:
+                pct[i] = 0
+            else:
+                pct[i] = np.float(shots_made[i])/np.float(num_backboard[i])
+            #print(pct)
+    #print(pct,type(pct))
     return pct
 
 
@@ -258,24 +266,28 @@ Returns: best_phi - idea backboard angle from the array
 def best_angle(min_phi,max_phi,fixed_y,fixed_z,next_z):
     height_backboard = 1.0668
     best_pct = 0.0
-    num_angles = 1000
+    num_angles = 10
+    phi_array = []
 
     for i in range(num_angles):
         phi = np.random.uniform(min_phi,max_phi)
-        #phi_array.append(phi)
+        phi_array.append(phi)
+        """
         pct = percent_in(phi,fixed_y,fixed_z,next_z)
         print("Percent in: ",pct,"Angle: ",phi)
         if pct >= best_pct:
             best_pct = pct
             best_phi = phi
         #plt.plot(np.linspace(0,height_backboard*np.cos(phi),1000),np.linspace(3.048,3.048+height_backboard*np.sin(phi),1000))
+        """
 
-    '''
     pct = percent_in(phi_array,fixed_y,fixed_z,next_z)
+    #print("1",pct,type(pct))
+    #print(pct)
     best_index = np.argmax(pct)
-    best_pct = pct[index]
-    best_phi = phi_array[index]
-    
+    best_pct = pct[best_index]
+    best_phi = phi_array[best_index]
+    '''
     if 0 in num_backboard:
         pct = []
         for num in num_backboard:
@@ -287,7 +299,7 @@ def best_angle(min_phi,max_phi,fixed_y,fixed_z,next_z):
         pct = np.float(shots_made)/np.float(num_backboard)
     '''
 
-        
+
 
 
     return best_phi
@@ -305,7 +317,7 @@ def optimize_angle(fixed_y,fixed_z,next_z):
     height_backboard = 1.0668
     central_phi = [np.pi/2]
     n = 2 #we start by testing points plus/minus pi/2 of the central_phi
-    tolerance = 1e-6
+    tolerance = 1e-2
     diff = np.pi/2 #start at value of pi/2 because we know the while loop condition will be true
     index = 0
 
@@ -333,8 +345,11 @@ def move_points():
         z.append(z[j-1]+(4.1148-3.048)/(num_points-1))
         phi = optimize_angle(y[j-1],z[j-1],z[j])
         next_y = z[j]/np.tan(phi)
+        if next_y >= 2 or next_y <= -2:
+            phi = optimize_angle(y[j-1],z[j-1],z[j])
+            next_y = z[j]/np.tan(phi)
         y.append(next_y)
-        #plt.plot(np.linspace(y[j-1],y[j]),np.linspace(z[j-1],z[j],100))
+        plt.plot(np.linspace(y[j-1],y[j],100),np.linspace(z[j-1],z[j],100))
 
     return y,z
 
