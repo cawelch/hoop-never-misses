@@ -174,12 +174,11 @@ def RK4(init,phi_array,backboard_y,backboard_z):
             r += (k1+2*k2+2*k3+k4)/6
 
     if stop:
-        print("hit")
+        #print("hit")
         return y_points, z_points, v_y_points, v_z_points,basket
     else:
         return [],[],[],[],basket
 
-    return y_points,z_points,v_y_points,v_z_points,basket
 
 
 """
@@ -210,40 +209,40 @@ def move_points(num_points):
     for i in range(1,num_points):
         backboard_z[i]=(backboard_z[i-1]+(4.1148-3.048)/(num_points-1))
         backboard_y[i]=(np.random.uniform(-0.5,0.5))
-    print(backboard_y,backboard_z)
+    #print(backboard_y,backboard_z)
     plt.plot(backboard_y,backboard_z)
     return backboard_y,backboard_z
 
 
 def percent_in():
-    num_backboards = 1
+    num_backboards = 2
     num_backboard_points = 3
-    num_shots = 100
+    num_shots = 1000
     backboard_y = np.zeros((num_backboards,num_backboard_points))
     backboard_z = np.zeros((num_backboards,num_backboard_points))
     shots_in = np.zeros(num_backboards)
 
     for i in range(num_backboards):
-            back_y, back_z = move_points(num_backboard_points)
-            backboard_y[i] = back_y
-            backboard_z[i] = back_z
-            #print(backboard_y,backboard_z)
-            #backboard_y[i],backboard_z[i] = move_points(num_backboard_points)
-            #plt.plot(backboard_y[i],backboard_z[i])
-            del_y = []
-            del_z = []
-            #print(backboard_y)
-            #Creates an array of the change in y and z for each point in the backboard
-            for m in range(len(backboard_y[i])-1):
-                del_y.append(backboard_y[i][m+1]-backboard_y[i][m])
-                del_z.append(backboard_z[i][m+1]-backboard_z[i][m])
-            phi_array = np.arctan(np.array(del_z)/np.array(del_y))
-            for j in range(len(phi_array)):
-                if phi_array[j] < 0:
-                    phi_array[j] += np.pi
+        back_y, back_z = move_points(num_backboard_points)
+        backboard_y[i] = back_y
+        backboard_z[i] = back_z
+        #print(backboard_y,backboard_z)
+        #backboard_y[i],backboard_z[i] = move_points(num_backboard_points)
+        #plt.plot(backboard_y[i],backboard_z[i])
+        del_y = []
+        del_z = []
+        #print(backboard_y)
+        #Creates an array of the change in y and z for each point in the backboard
+        for m in range(len(backboard_y[i])-1):
+            del_y.append(backboard_y[i][m+1]-backboard_y[i][m])
+            del_z.append(backboard_z[i][m+1]-backboard_z[i][m])
+        phi_array = np.arctan(np.array(del_z)/np.array(del_y))
+        for j in range(len(phi_array)):
+            if phi_array[j] < 0:
+                phi_array[j] += np.pi
 
-    for k in range(num_shots):
-        random_y = 7.5#np.random.uniform(0.5,7) #7.5
+    while np.amax(shots_in)==0:
+        random_y = 7.5 #np.random.uniform(0.5,7) #7.5
         random_z = 1.8 #np.random.uniform(1.5,2) #1.8
         random_v0 = 9.8 #np.random.uniform(6,10) #9.8
         random_theta = np.random.uniform(np.pi/2,np.pi) #2*np.pi/3
@@ -255,14 +254,27 @@ def percent_in():
 
             if basket:
                 shots_in[i] += 1
+            #print(shots_in[i],type(shots_in[i]),type(num_shots))
 
-    percent_shots_in = np.array(shots_in)/num_shots
+    #print(shots_in)
+    percent_shots_in = np.array(shots_in)/np.float(num_shots)
     print(percent_shots_in)
+    
+    return percent_shots_in,backboard_y,backboard_z
 
+    
+def best_backboard():
+    percent_shots_in,backboard_y_all,backboard_z_all = percent_in()
+    max_index = np.argmax(percent_shots_in)
+    backboard_y = backboard_y_all[max_index]
+    backboard_z = backboard_z_all[max_index]
+    
+    print(backboard_y,backboard_z)
+    
 
 def main():
-    percent_in()
-
+    best_backboard()
+    
     plt.savefig("plot-output.png")
     plt.show()
 
