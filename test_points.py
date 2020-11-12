@@ -143,6 +143,7 @@ def RK4(init,phi_array,backboard_y,backboard_z):
     backboard = False
     stop = False
     basket = False
+    stop_index = 0
     height_backboard = 1.0668
     min_y = -0.5 #height_backboard*np.cos(phi)-0.1
 
@@ -161,10 +162,12 @@ def RK4(init,phi_array,backboard_y,backboard_z):
         #print(backboard)
         if (not stop) and backboard:
             stop = True
+            stop_index = len(y_points)
             y_bounce, z_bounce, v_y_bounce, v_z_bounce = elastic_bounce(hit_phi,r[0],r[1],r[2],r[3])
             r = np.array([y_bounce,z_bounce,v_y_bounce,v_z_bounce],float)
             if in_basket(r[0],r[1]):
                 basket = True
+                print(basket)
 
         else:
             k1 = h*f(r)
@@ -172,9 +175,11 @@ def RK4(init,phi_array,backboard_y,backboard_z):
             k3 = h*f(r+0.5*k2)
             k4 = h*f(r+k3)
             r += (k1+2*k2+2*k3+k4)/6
-
+    
     if stop:
         #print("hit")
+        plt.plot(y_points[:stop_index],z_points[:stop_index],'b')
+        plt.plot(y_points[stop_index:],z_points[stop_index:],'r')
         return y_points, z_points, v_y_points, v_z_points,basket
     else:
         return [],[],[],[],basket
@@ -221,11 +226,13 @@ def percent_in():
     backboard_y = np.zeros((num_backboards,num_backboard_points))
     backboard_z = np.zeros((num_backboards,num_backboard_points))
     shots_in = np.zeros(num_backboards)
+    backboard_y = np.array([[0,0,0],[0,-0.1,0]])
+    backboard_z = np.array([[3.048,3.5814,4.1148],[3.048,3.5814,4.1148]])
 
     for i in range(num_backboards):
-        back_y, back_z = move_points(num_backboard_points)
-        backboard_y[i] = back_y
-        backboard_z[i] = back_z
+        #back_y, back_z = move_points(num_backboard_points)
+        #backboard_y[i] = back_y
+        #backboard_z[i] = back_z
         #print(backboard_y,backboard_z)
         #backboard_y[i],backboard_z[i] = move_points(num_backboard_points)
         #plt.plot(backboard_y[i],backboard_z[i])
@@ -236,12 +243,23 @@ def percent_in():
         for m in range(len(backboard_y[i])-1):
             del_y.append(backboard_y[i][m+1]-backboard_y[i][m])
             del_z.append(backboard_z[i][m+1]-backboard_z[i][m])
-        phi_array = np.arctan(np.array(del_z)/np.array(del_y))
+            
+        if 0 in del_y:
+            for k in range(len(del_y)):
+                phi_array = []
+                if del_y[k] == 0:
+                    phi_array.append(np.pi/2)
+                else:
+                    phi_array.append(np.arctan(np.array(del_z[k])/np.array(del_y[k])))
+        else:
+            phi_array = np.arctan(np.array(del_z)/np.array(del_y))
+        
         for j in range(len(phi_array)):
             if phi_array[j] < 0:
                 phi_array[j] += np.pi
-
-    while np.amax(shots_in)==0:
+    index = 0
+    for k in range(num_shots):
+        #print(index)
         random_y = 7.5 #np.random.uniform(0.5,7) #7.5
         random_z = 1.8 #np.random.uniform(1.5,2) #1.8
         random_v0 = 9.8 #np.random.uniform(6,10) #9.8
@@ -250,11 +268,12 @@ def percent_in():
 
         for i in range(num_backboards):
             y_points,z_points,v_y_points,v_z_points,basket = RK4(init,phi_array,backboard_y[i],backboard_z[i])
-            plt.plot(y_points,z_points)
+            #plt.plot(y_points,z_points)
 
             if basket:
                 shots_in[i] += 1
             #print(shots_in[i],type(shots_in[i]),type(num_shots))
+        #index += 1
 
     #print(shots_in)
     percent_shots_in = np.array(shots_in)/np.float(num_shots)
@@ -274,7 +293,7 @@ def best_backboard():
 
 def main():
     best_backboard()
-    
+    plt.plot(np.linspace(0.6,0.15,100),[3.048]*100)
     plt.savefig("plot-output.png")
     plt.show()
 
