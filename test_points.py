@@ -207,32 +207,34 @@ def in_basket(y,z):
 
 
 def move_points(num_points):
-    backboard_y = np.zeros(num_points) #[0,-0.1,0]
-    backboard_z = np.zeros(num_points) #[3.048,3.5814,4.1148]
-    backboard_z[0] = 3.048
+    backboard_y = np.array([0,-0.2,0])#np.zeros(num_points) #[0,-0.1,0]
+    backboard_z = np.array([3.048,3.5814,4.1148])#np.zeros(num_points) #[3.048,3.5814,4.1148]
+    #backboard_z[0] = 3.048
 
-    for i in range(1,num_points):
-        backboard_z[i]=(backboard_z[i-1]+(4.1148-3.048)/(num_points-1))
-        backboard_y[i]=(np.random.uniform(-0.5,0.5))
+    #for i in range(1,num_points):
+        #backboard_z[i]=(backboard_z[i-1]+(4.1148-3.048)/(num_points-1))
+        #backboard_y[i]=(np.random.uniform(-0.5,0.5))
     #print(backboard_y,backboard_z)
     plt.plot(backboard_y,backboard_z)
     return backboard_y,backboard_z
 
 
 def percent_in():
-    num_backboards = 2
+    num_backboards = 1
     num_backboard_points = 3
     num_shots = 1000
     backboard_y = np.zeros((num_backboards,num_backboard_points))
     backboard_z = np.zeros((num_backboards,num_backboard_points))
     shots_in = np.zeros(num_backboards)
-    backboard_y = np.array([[0,0,0],[0,-0.1,0]])
-    backboard_z = np.array([[3.048,3.5814,4.1148],[3.048,3.5814,4.1148]])
+    #backboard_y = np.array([[0,0,0]])
+    #backboard_z = np.array([[3.048,3.5814,4.1148]])
+    #backboard_y = np.array([[0,0,0],[0,-0.1,0]])
+    #backboard_z = np.array([[3.048,3.5814,4.1148],[3.048,3.5814,4.1148]])
 
     for i in range(num_backboards):
-        #back_y, back_z = move_points(num_backboard_points)
-        #backboard_y[i] = back_y
-        #backboard_z[i] = back_z
+        back_y, back_z = move_points(num_backboard_points)
+        backboard_y[i] = back_y
+        backboard_z[i] = back_z
         #print(backboard_y,backboard_z)
         #backboard_y[i],backboard_z[i] = move_points(num_backboard_points)
         #plt.plot(backboard_y[i],backboard_z[i])
