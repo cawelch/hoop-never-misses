@@ -47,6 +47,7 @@ def hit_backboard(phi_array,y,z,backboard_y,backboard_z):
     height_backboard = 1.0668
     eps_backboard = 1e-4
     eps = 1e-1
+    #print(phi_array)
 
     theta = np.linspace(0,2*np.pi,100)
     circle_ys = y+radius*np.cos(theta)
@@ -54,8 +55,7 @@ def hit_backboard(phi_array,y,z,backboard_y,backboard_z):
     #print(circle_ys,circle_zs)
     #plt.plot(circle_ys,circle_zs)
     #print(phi_array)
-    for j in range(len(phi_array)-1):
-        #print(len(phi_array)-1)
+    for j in range(len(phi_array)):
         #print("j",j)
         phi = phi_array[j]
         #print(phi)
@@ -165,9 +165,6 @@ def RK4(init,phi_array,backboard_y,backboard_z):
             stop_index = len(y_points)
             y_bounce, z_bounce, v_y_bounce, v_z_bounce = elastic_bounce(hit_phi,r[0],r[1],r[2],r[3])
             r = np.array([y_bounce,z_bounce,v_y_bounce,v_z_bounce],float)
-            if in_basket(r[0],r[1]):
-                basket = True
-                print(basket)
 
         else:
             k1 = h*f(r)
@@ -175,11 +172,16 @@ def RK4(init,phi_array,backboard_y,backboard_z):
             k3 = h*f(r+0.5*k2)
             k4 = h*f(r+k3)
             r += (k1+2*k2+2*k3+k4)/6
+            
+        if in_basket(r[0],r[1]):
+            basket = True
+            #print(basket)
     
     if stop:
         #print("hit")
         plt.plot(y_points[:stop_index],z_points[:stop_index],'b')
         plt.plot(y_points[stop_index:],z_points[stop_index:],'r')
+        #plt.plot(y_points,z_points)
         return y_points, z_points, v_y_points, v_z_points,basket
     else:
         return [],[],[],[],basket
@@ -195,49 +197,45 @@ Parameters: y,z - y and z position of the ball
 Returns: boolean value indicating whether or not the ball is in the basket
 """
 def in_basket(y,z):
+    #print('in_basket')
     C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
     eps_rim = 1e-1
 
     if np.absolute(z-3.048) <= eps_rim:
+        #print('in z range')
         if y+radius <= 0.6 and y-radius >= 0.15:
+            #print('in y range')
             return True
 
     return False
 
 
 def move_points(num_points):
-    backboard_y = np.array([0,-0.2,0])#np.zeros(num_points) #[0,-0.1,0]
-    backboard_z = np.array([3.048,3.5814,4.1148])#np.zeros(num_points) #[3.048,3.5814,4.1148]
-    #backboard_z[0] = 3.048
+    backboard_y = np.zeros(num_points) #[0,-0.1,0]
+    backboard_z = np.zeros(num_points) #[3.048,3.5814,4.1148]
+    backboard_z[0] = 3.048
 
-    #for i in range(1,num_points):
-        #backboard_z[i]=(backboard_z[i-1]+(4.1148-3.048)/(num_points-1))
-        #backboard_y[i]=(np.random.uniform(-0.5,0.5))
+    for i in range(1,num_points):
+        backboard_z[i]=(backboard_z[i-1]+(4.1148-3.048)/(num_points-1))
+        backboard_y[i]=(np.random.uniform(-0.5,0.5))
     #print(backboard_y,backboard_z)
     plt.plot(backboard_y,backboard_z)
     return backboard_y,backboard_z
 
 
 def percent_in():
-    num_backboards = 1
-    num_backboard_points = 3
+    num_backboards = 1000
+    num_backboard_points = 10
     num_shots = 1000
     backboard_y = np.zeros((num_backboards,num_backboard_points))
     backboard_z = np.zeros((num_backboards,num_backboard_points))
     shots_in = np.zeros(num_backboards)
-    #backboard_y = np.array([[0,0,0]])
-    #backboard_z = np.array([[3.048,3.5814,4.1148]])
-    #backboard_y = np.array([[0,0,0],[0,-0.1,0]])
-    #backboard_z = np.array([[3.048,3.5814,4.1148],[3.048,3.5814,4.1148]])
 
     for i in range(num_backboards):
         back_y, back_z = move_points(num_backboard_points)
         backboard_y[i] = back_y
         backboard_z[i] = back_z
-        #print(backboard_y,backboard_z)
-        #backboard_y[i],backboard_z[i] = move_points(num_backboard_points)
-        #plt.plot(backboard_y[i],backboard_z[i])
         del_y = []
         del_z = []
         #print(backboard_y)
@@ -260,6 +258,7 @@ def percent_in():
             if phi_array[j] < 0:
                 phi_array[j] += np.pi
     index = 0
+    #print(backboard_y,backboard_z)
     for k in range(num_shots):
         #print(index)
         random_y = 7.5 #np.random.uniform(0.5,7) #7.5
@@ -279,7 +278,7 @@ def percent_in():
 
     #print(shots_in)
     percent_shots_in = np.array(shots_in)/np.float(num_shots)
-    print(percent_shots_in)
+    #print(percent_shots_in)
     
     return percent_shots_in,backboard_y,backboard_z
 
@@ -287,10 +286,11 @@ def percent_in():
 def best_backboard():
     percent_shots_in,backboard_y_all,backboard_z_all = percent_in()
     max_index = np.argmax(percent_shots_in)
+    max_percent = percent_shots_in[max_index]
     backboard_y = backboard_y_all[max_index]
     backboard_z = backboard_z_all[max_index]
     
-    print(backboard_y,backboard_z)
+    print(max_percent,backboard_y,backboard_z)
     
 
 def main():
