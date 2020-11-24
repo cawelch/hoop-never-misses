@@ -225,7 +225,7 @@ def move_points(num_points):
 
 
 def percent_in():
-    num_backboards = 1000
+    num_backboards = 100
     num_backboard_points = 10
     num_shots = 1000
     backboard_y = np.zeros((num_backboards,num_backboard_points))
