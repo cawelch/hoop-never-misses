@@ -10,7 +10,7 @@ Brief: Uses RK4 ODE solver to plot the 2D trajectory of a Wilson basketball
 
 import numpy as np
 import pylab as plt
-from scipy.integrate import odeint
+#from scipy.integrate import odeint
 
 eps_backboard = 1e-2 # margin of error when checking if two quantities are equal
 eps_rim = 1e-1
@@ -38,10 +38,10 @@ def f(r):
     v_y = r[2]
     v_z = r[3]
 
-    fy = -v_y
+    fy = v_y
     fz = v_z
 
-    f_v_y = -coef*fy*np.sqrt(fy**2+fz**2)/(2*m)
+    f_v_y = coef*fy*np.sqrt(fy**2+fz**2)/(2*m)
     f_v_z = coef*fz*np.sqrt(fy**2+fz**2)/(2*m)-g
 
     return np.array([fy, fz, f_v_y, f_v_z], float)
@@ -113,7 +113,7 @@ def elastic(y_points, z_points, v_y_points, v_z_points, T):
             try:
                 if not (z_points[i]+np.sqrt(radius**2-(y-y_points[i])**2) >= z_min and
                     z_points[i]+np.sqrt(radius**2-(y-y_points[i])**2) <= z_max):
-                    
+
                     new_y.append(y_points[i])
                     new_z.append(z_points[i])
                     new_v_y.append(v_y_points[i])
@@ -200,11 +200,11 @@ def main():
     """
     Change each of these initial values for different shots when doing the Monte Carlo simulation
     """
-    angle = 80  # float(input("Enter angle shot at in degrees: "))
+    angle = 120  # float(input("Enter angle shot at in degrees: "))
     theta = (np.pi/180) * angle  # float(input("Enter angle shot at in degrees: "))
     v0 = 9.8  # m/s # float(input("Enter initial velocity (m/s): "))
     start_height = 1.8
-    start_y = 2.5 #arbitrary distance from backboard in m
+    start_y = 6 #arbitrary distance from backboard in m
 
 
     init = [start_y, start_height, v0*np.cos(theta), v0*np.sin(theta)]
