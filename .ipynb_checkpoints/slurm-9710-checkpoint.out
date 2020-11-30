@@ -1,0 +1,11 @@
+Starting SLURM job...
+compute1.davidson.edu
+/home/DAVIDSON/cawelch/hoop-never-misses
+compute1.davidson.edu
+Sun Oct 11 14:16:51 EDT 2020
+Running plot script on a single CPU core
+  File "monte_carlo.py", line 286
+    print("Percent in: ",pct,"Angle: ",phi)
+    ^
+IndentationError: unexpected indent
+Sun Oct 11 14:16:51 EDT 2020
