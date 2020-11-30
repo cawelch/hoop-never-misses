@@ -27,7 +27,15 @@ As noted in *File Structure*, *monte_carlo.sh* will be used to run the main code
 In order to run the code, first ensure you are in the correct directory in Jupyter Hub. Then, use the following command in the Jupyter command line:
 `sbatch monte_carlo.sh`
 
-To change the number of simulations, you must edit the *monte_carlo_two_d_.py* directly. 
+To change the number of simulations, you must edit the *monte_carlo_two_d_.py* directly. The variable, *num_backboard_points*, on line 310 refers to the number of points that make up the backboard. For `num_backboard_points = 3`, the backboard resembles a triangle, for example. The larger this value, the more less jagged and more smooth the backboard will become. The variable, *num_backboards*, on line 311 refers to the number of randomly generated backboards we will compare to find the optimal backboard. When we use more backboards, the likelihood that the optimal backboard is one of our tested backboards is higher, so we want to use as many backboards as possible. The variable, *num_shots*, on line 312 refers to the number of random shots will be "thrown" at each backboard. With a larger number of shots, we will have more confidence that the backboard we chose of our random backboards is optimal.
+
+Increasing all of these variables will result in a more accurate model, but it's important to keep in mind how computationally intensive the code is.
 
 ## Important Information Pertaining to the Project
-* 
+* We based our model off of a Wilson basketball - 22oz, 29.5in circumference.
+* The forces we included are gravity and drag/air resistance. We neglected the buoyant force and the Magnus force.
+    * The drag coefficient for a sphere is 0.47
+    * The air density we used is 1.225 kg/m^3
+* We assumed an elastic collision with the backboard. 
+* The backboard is 3'6" by 6'.
+* The hoop is 0.45m in diameter and is offset 0.15m in front of the backboard.
