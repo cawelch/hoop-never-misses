@@ -1,4 +1,14 @@
+"""
+File: monte_carlo_two_d.py
+Author: Caitlin Welch
+Date modified: November 30, 2020
 
+Brief: Finds the optimal backboard for a given number of points on the backboard,
+        a given number of random backboards to choose from and a given number
+        of initial shots to simulate. The optimal backboard is the backboard
+        that has the greatest percent of shots that go in the basket for the
+        random shots.
+"""
 
 import numpy as np
 import pylab as plt
@@ -38,8 +48,10 @@ def f(r):
 """
 For given y and z coordinates, determines whether the ball is currently hitting the backboard.
 
-Parameters: phi - angle of the backboard with the horizontal
+Parameters: phi_array - array of angles of the backboard with the horizontal
             y, z - current y and z position of the ball
+            backboard_y, backboard_z - arrays of the y and z coordinates of the
+                                        random backboard points
 
 Returns: boolean value indicating whether the ball is hitting the backboard
 """
@@ -54,31 +66,21 @@ def hit_backboard(phi_array,y,z,backboard_y,backboard_z):
     theta = np.linspace(0,2*np.pi,100)
     circle_ys = y+radius*np.cos(theta)
     circle_zs = z+radius*np.sin(theta)
-    #print(circle_ys,circle_zs)
-    #plt.plot(circle_ys,circle_zs)
-    #print(phi_array)
     for j in range(len(phi_array)):
-        #print("j",j)
         phi = phi_array[j]
-        #print(phi)
         slope = np.tan(phi_array[j])
         for i in range(len(circle_ys)):
             on_slope = np.absolute(circle_zs[i]-backboard_z[j]-slope*(circle_ys[i]-backboard_y[j]))
-            #print("here")
             if phi <= np.pi/2:
                 if circle_ys[i] >= backboard_y[j] and circle_ys[i] <= backboard_y[j+1] and circle_zs[i] >= backboard_z[j] and circle_zs[i] <= backboard_z[j+1] and on_slope <= eps:
                     hit_phi = phi
-                    #print("hit")
                     return True, hit_phi
             else:
                 if circle_ys[i] <= backboard_y[j] and circle_ys[i] >= backboard_y[j+1] and circle_zs[i] >= backboard_z[j] and circle_zs[i] <= backboard_z[j+1] and on_slope <= eps:
                     hit_phi = phi
-                    #print("hit")
                     return True, hit_phi
-            #print("i after",i)
 
     hit_phi = -1
-    #print("no")
     return False,hit_phi
 
 
@@ -101,11 +103,8 @@ def elastic_bounce(phi,y,z,v_y,v_z):
     z_after = z
 
     if phi < np.pi/2:
-        #print(v_z)
         if v_z > 0:
             alpha = np.pi/2-2*phi-theta
-            #alpha = np.pi/2-2*phi+theta
-            #print(alpha)
             v_y_after = v*np.cos(alpha)
             v_z_after = v*np.sin(alpha)
         else:
@@ -134,7 +133,9 @@ Function used to solve the differential equations, using the Fourth order
 Runge-Kutta method.
 
 Parameters: init - array of the initial y and z positions and velocities
-            phi - angle that the backboard makes with the horizontal
+            phi_array - array of angles that the backboard makes with the horizontal
+            backboard_y, backboard_z - arrays of the y and z coordinates of the
+                                        random backboard points
 Returns: solved differential equations of the y and z positions and velocities
 """
 def RK4(init,phi_array,backboard_y,backboard_z):
@@ -147,21 +148,17 @@ def RK4(init,phi_array,backboard_y,backboard_z):
     basket = False
     stop_index = 0
     height_backboard = 1.0668
-    min_y = -0.5 #height_backboard*np.cos(phi)-0.1
+    min_y = -0.5
 
     r = np.array(init, float)
     h = 0.01
-    #print("hi")
     while (r[1] >= 3.048 or r[3] > 0) and r[0] >= min_y:
-        #print("while")
-        #plt.plot(r[0],r[1])
         y_points.append(r[0])
         z_points.append(r[1])
         v_y_points.append(r[2])
         v_z_points.append(r[3])
 
         backboard, hit_phi = hit_backboard(phi_array,r[0],r[1],backboard_y,backboard_z)
-        #print(backboard)
         if (not stop) and backboard:
             stop = True
             stop_index = len(y_points)
@@ -174,20 +171,16 @@ def RK4(init,phi_array,backboard_y,backboard_z):
             k3 = h*f(r+0.5*k2)
             k4 = h*f(r+k3)
             r += (k1+2*k2+2*k3+k4)/6
-            
+
         if in_basket(r[0],r[1]):
             basket = True
-            #print(basket)
-    
+
     if stop:
-        #print("hit")
         plt.plot(y_points[:stop_index],z_points[:stop_index],'b')
         plt.plot(y_points[stop_index:],z_points[stop_index:],'r')
-        #plt.plot(y_points,z_points)
         return y_points, z_points, v_y_points, v_z_points,basket
     else:
         return [],[],[],[],basket
-
 
 
 """
@@ -199,20 +192,26 @@ Parameters: y,z - y and z position of the ball
 Returns: boolean value indicating whether or not the ball is in the basket
 """
 def in_basket(y,z):
-    #print('in_basket')
     C = 0.7493  # circumference in m, from basketball's circumference of 29.5 inches
     radius = C/(2*np.pi)
     eps_rim = 1e-1
 
     if np.absolute(z-3.048) <= eps_rim:
-        #print('in z range')
         if y+radius <= 0.6 and y-radius >= 0.15:
-            #print('in y range')
             return True
 
     return False
 
 
+"""
+Chooses num_points random coordinates for the backboard. The y coordinates are
+random within some given range, and the z coordinates are evenly spaced along the
+range of 3.058 to 4.1148m. Creates a random shape backboard.
+
+Parameters: num_points - the number of points that the backboard will be composed of
+
+Returns: backboard_y, backboard_z - the y and z coordinates of the random backboard
+"""
 def move_points(num_points):
     backboard_y = np.zeros(num_points) #[0,-0.1,0]
     backboard_z = np.zeros(num_points) #[3.048,3.5814,4.1148]
@@ -221,15 +220,25 @@ def move_points(num_points):
     for i in range(1,num_points):
         backboard_z[i]=(backboard_z[i-1]+(4.1148-3.048)/(num_points-1))
         backboard_y[i]=(np.random.uniform(-0.5,0.5))
-    #print(backboard_y,backboard_z)
     plt.plot(backboard_y,backboard_z)
     return backboard_y,backboard_z
 
 
-def percent_in():
-    num_backboards = 100
-    num_backboard_points = 10
-    num_shots = 1000
+"""
+Simulates num_shots shots at num_backboards random backboards composed of
+num_backboard_points. Keeps a tally of the number of shots that go in the basket
+for each backboard.
+
+Parameters - num_backboard_points - integer number of points that make up the backboard
+             num_backboards - integer number of random backboards for which we will compare the percent of shots in
+             num_shots - integer number of random shots thrown at each backboard
+
+Returns - percent_shots_in - array of the percent of shots that go in the basket
+                             for each random backboard
+          backboard_y, backboard_z - nested array of the y and z coordinates for
+                                     each random backboard
+"""
+def percent_in(num_backboard_points, num_backboards, num_shots):
     backboard_y = np.zeros((num_backboards,num_backboard_points))
     backboard_z = np.zeros((num_backboards,num_backboard_points))
     shots_in = np.zeros(num_backboards)
@@ -240,12 +249,10 @@ def percent_in():
         backboard_z[i] = back_z
         del_y = []
         del_z = []
-        #print(backboard_y)
-        #Creates an array of the change in y and z for each point in the backboard
         for m in range(len(backboard_y[i])-1):
             del_y.append(backboard_y[i][m+1]-backboard_y[i][m])
             del_z.append(backboard_z[i][m+1]-backboard_z[i][m])
-            
+
         if 0 in del_y:
             for k in range(len(del_y)):
                 phi_array = []
@@ -255,48 +262,55 @@ def percent_in():
                     phi_array.append(np.arctan(np.array(del_z[k])/np.array(del_y[k])))
         else:
             phi_array = np.arctan(np.array(del_z)/np.array(del_y))
-        
+
         for j in range(len(phi_array)):
             if phi_array[j] < 0:
                 phi_array[j] += np.pi
     index = 0
-    #print(backboard_y,backboard_z)
     for k in range(num_shots):
-        #print(index)
-        random_y = 7.5 #np.random.uniform(0.5,7) #7.5
-        random_z = 1.8 #np.random.uniform(1.5,2) #1.8
-        random_v0 = 9.8 #np.random.uniform(6,10) #9.8
-        random_theta = np.random.uniform(np.pi/2,np.pi) #2*np.pi/3
+        random_y = 7.5 #np.random.uniform(0.5,7)
+        random_z = 1.8 #np.random.uniform(1.5,2)
+        random_v0 = 9.8 #np.random.uniform(6,10)
+        random_theta = np.random.uniform(np.pi/2,np.pi)
         init = [random_y,random_z,random_v0*np.cos(random_theta),random_v0*np.sin(random_theta)]
 
         for i in range(num_backboards):
             y_points,z_points,v_y_points,v_z_points,basket = RK4(init,phi_array,backboard_y[i],backboard_z[i])
-            #plt.plot(y_points,z_points)
 
             if basket:
                 shots_in[i] += 1
-            #print(shots_in[i],type(shots_in[i]),type(num_shots))
-        #index += 1
 
-    #print(shots_in)
     percent_shots_in = np.array(shots_in)/np.float(num_shots)
-    #print(percent_shots_in)
-    
     return percent_shots_in,backboard_y,backboard_z
 
-    
-def best_backboard():
-    percent_shots_in,backboard_y_all,backboard_z_all = percent_in()
+
+"""
+Finds the best backboard out of a set of randomly generated backboards.
+
+Parameters - num_backboard_points - integer number of points that make up the backboard
+             num_backboards - integer number of random backboards for which we will compare the percent of shots in
+             num_shots - integer number of random shots thrown at each backboard
+
+Returns: max_percent - percent of shots that go in the basket for the optimal
+                       backboard of the randomly generated backboards
+         backboard_y, backboard_z - y and z coordinates of the optimal backboard
+                                    of the randomly generated backboards
+"""
+def best_backboard(num_backboard_points, num_backboards, num_shots):
+    percent_shots_in,backboard_y_all,backboard_z_all = percent_in(num_backboard_points, num_backboards, num_shots)
     max_index = np.argmax(percent_shots_in)
     max_percent = percent_shots_in[max_index]
     backboard_y = backboard_y_all[max_index]
     backboard_z = backboard_z_all[max_index]
-    
-    print(max_percent,backboard_y,backboard_z)
-    
+
+    return max_percent,backboard_y,backboard_z
+
 
 def main():
-    best_backboard()
+    num_backboard_points = 10
+    num_backboards = 1000
+    num_shots = 1000
+    print(best_backboard(num_backboard_points, num_backboards, num_shots))
     plt.plot(np.linspace(0.6,0.15,100),[3.048]*100)
     plt.savefig("plot-output.png")
     plt.show()
