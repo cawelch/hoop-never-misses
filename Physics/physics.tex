@@ -1,0 +1,44 @@
+%\documentclass[preprint,prb,amsmath]{revtex4}
+\documentclass[aps,draft,12pt]{revtex4}
+%\documentclass[12pt]{article}
+\usepackage{mathtools}
+\usepackage[final]{graphicx}
+\usepackage{enumitem}
+\usepackage{amssymb}
+
+\newcommand{\RomanNumeralCaps}[1]
+    {\MakeUppercase{\romannumeral #1}}
+
+\begin{document}
+\title{Physics Behind ``Hoop Never Misses"}
+\maketitle
+
+\section{Basketball}
+During this project, we have been in contact with the Davidson Men's Basketball coaches, so we wanted to base our backboard off the basketball used at the college level. While there is no standard basketball used across the NCAA, we chose to use the Wilson basketball, one of the more common across the league. The Wilson basketball is 22 oz and has a circumference of 29.5".
+
+\section{Hoop and Backboard Dimensions}
+\begin{itemize}
+\item
+The backboard is 3'6" by 6'.
+\item
+The hoop is 0.45 m in diameter and is offset 0.15 m in front of the backboard.
+\end{itemize}
+
+\section{System of Differential Equations}
+The forces we included are gravity and drag/air resistance. We neglected the buoyant force and the Magnus force.
+
+\begin{align}
+x' &= -v_x \\
+y' &= -v_y \\
+z' &= v_z \\
+v_x' &= C_D\rho A\frac{x'\sqrt{x'^2+y'^2+z'^2}}{2m} \\
+v_y' &= C_D\rho A\frac{y'\sqrt{x'^2+y'^2+z'^2}}{2m} \\
+v_z' &= -C_D\rho A\frac{z'\sqrt{x'^2+y'^2+z'^2}}{2m}-g
+\end{align}
+
+where the drag coefficient, $C_D$, is 0.47 for a sphere, the air density, $\rho$, is 1.225 kg/m$^3$ and the cross-sectional, $A$, is equal to $\pi r^2$ with $r=\frac{C}{2\pi}$ using the circumference in Section \RomanNumeralCaps{1}.
+
+\section{Collision with the Backboard}
+In our model, we assumed an elastic collision with the backboard. To determine whether it is necessary to include energy lost in the collision, we would need to build a prototype of the desired material and experimentally determine the impact of energy lost.
+
+\end{document}
